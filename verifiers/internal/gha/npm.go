@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 
@@ -30,24 +31,25 @@ const (
 
 var errrorInvalidAttestations = errors.New("invalid npm attestations")
 
-/*
-NOTE: key available at https://registry.npmjs.org/-/npm/v1/keys and https://github.com/sigstore/root-signing/blob/main/repository/repository/targets/registry.npmjs.org/7a8ec9678ad824cdccaa7a6dc0961caf8f8df61bc7274189122c123446248426.keys.json
-
-			https://docs.npmjs.com/about-registry-signatures
-		{
-		"keys": [
-		{
-			"expires": null,
-			"keyid": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA",
-			"keytype": "ecdsa-sha2-nistp256",
-			"scheme": "ecdsa-sha2-nistp256",
-			"key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1Olb3zMAFFxXKHiIkQO5cJ3Yhl5i6UPp+IhuteBJbuHcA5UogKo0EWtlWwW6KSaKoTNEYL7JlCQiVnkhBktUgg=="
-		}
-		]
-	}
-*/
-const npmRegistryPublicKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1Olb3zMAFFxXKHiIkQO5cJ3Yhl5i6UPp+IhuteBJbuHcA5UogKo0EWtlWwW6KSaKoTNEYL7JlCQiVnkhBktUgg=="
 const npmRegistryPublicKeyID = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+
+var npmRegistryPublicKey string
+
+// init initializes the npmRegistryPublicKey from the SigstoreTufClient
+func init() {
+	client, err := NewSigstoreTufClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+	keys, err := GetNpmjsKeysTarget(client, TargetPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	npmRegistryPublicKey, err = GetAttestationKeyMaterialByKeyId(keys, npmRegistryPublicKeyID)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 type attestationSet struct {
 	Attestations []attestation `json:"attestations"`
