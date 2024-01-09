@@ -27,14 +27,6 @@ func (client mockSigstoreTufClient) GetTarget(targetPath string) ([]byte, error)
 	return content, nil
 }
 
-// func mustGetClient(t *testing.T) SigstoreTufClient {
-// 	client, err := NewSigstoreTufClient()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	return client
-// }
-
 func mustReadLocalFile(t *testing.T, filePath string) []byte {
 	content, err := os.ReadFile(filePath)
 	assert.NoErrorf(t, err, "reading local file: %s", err)
