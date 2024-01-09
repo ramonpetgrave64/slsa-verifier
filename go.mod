@@ -27,7 +27,8 @@ require (
 	sigs.k8s.io/release-utils v0.7.7
 )
 
-replace github.com/sigstore/sigstore-go => ../sigstore-go
+// use the pending PR #41 branch tuf-client-2
+replace github.com/sigstore/sigstore-go => github.com/sigstore/sigstore-go v0.0.0-20231222133331-d489b534902f
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
