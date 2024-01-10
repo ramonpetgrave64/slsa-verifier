@@ -21,18 +21,18 @@ const (
 type NpmjsKeysTarget struct {
 	Keys []Key `json:"keys"`
 }
-type ValidFor struct {
-	Start time.Time `json:"start"`
+type Key struct {
+	KeyID     string    `json:"keyId"`
+	KeyUsage  string    `json:"keyUsage"`
+	PublicKey PublicKey `json:"publicKey"`
 }
 type PublicKey struct {
 	RawBytes   string   `json:"rawBytes"`
 	KeyDetails string   `json:"keyDetails"`
 	ValidFor   ValidFor `json:"validFor"`
 }
-type Key struct {
-	KeyID     string    `json:"keyId"`
-	KeyUsage  string    `json:"keyUsage"`
-	PublicKey PublicKey `json:"publicKey"`
+type ValidFor struct {
+	Start time.Time `json:"start"`
 }
 
 type SigstoreTufClient interface {
