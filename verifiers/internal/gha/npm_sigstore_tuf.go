@@ -54,8 +54,11 @@ func NewSigstoreTufClient() (*sigstoreTuf.Client, error) {
 	return client, nil
 }
 
-// GetNpmjsKeysTarget Fetch and parse the keys.json file in Sigstore's root for npmjs
-// https://github.com/sigstore/root-signing/blob/5fd11f7ec0a993b0f20c335b33e53cfffb986b2e/repository/repository/targets/registry.npmjs.org/7a8ec9678ad824cdccaa7a6dc0961caf8f8df61bc7274189122c123446248426.keys.json#L4
+/*
+GetNpmjsKeysTarget Fetch and parse the keys.json file in Sigstore's root for npmjs
+The inner TUF client will verify this "blob" is signed with correct delegate TUF roles
+https://github.com/sigstore/root-signing/blob/5fd11f7ec0a993b0f20c335b33e53cfffb986b2e/repository/repository/targets/registry.npmjs.org/7a8ec9678ad824cdccaa7a6dc0961caf8f8df61bc7274189122c123446248426.keys.json#L4
+*/
 func GetNpmjsKeysTarget(client SigstoreTufClient, targetPath string) (*NpmjsKeysTarget, error) {
 	blob, err := client.GetTarget(targetPath)
 	if err != nil {
@@ -71,7 +74,7 @@ func GetNpmjsKeysTarget(client SigstoreTufClient, targetPath string) (*NpmjsKeys
 
 /*
 GetAttestationKeyMaterialByKeyId Given our set of keys, return the target key's material.
-It alse checks that the keyUsage is "nmp:attestations", but we may also want to check
+It also checks that the keyUsage is "nmp:attestations", but we may also want to check
 the existing ValidFor.Start (and a potential future ValidFor.End).
 */
 func GetAttestationKeyMaterialByKeyId(keys *NpmjsKeysTarget, keyId string) (string, error) {
