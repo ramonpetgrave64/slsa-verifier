@@ -13,11 +13,11 @@ import (
 
 const (
 	KeyUsage   = "npm:attestations"
-	KeyId      = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+	KeyID      = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
 	TargetPath = "registry.npmjs.org/keys.json"
 )
 
-// NpmjsKeysTarget describes the structure of the target file
+// NpmjsKeysTarget describes the structure of the target file.
 type NpmjsKeysTarget struct {
 	Keys []Key `json:"keys"`
 }
@@ -39,7 +39,7 @@ type SigstoreTufClient interface {
 	GetTarget(target string) ([]byte, error)
 }
 
-// NewSigstoreTufClient Get a Sigstore TUF client, which itself is a wrapper around the official TUF client
+// NewSigstoreTufClient Get a Sigstore TUF client, which itself is a wrapper around the official TUF client.
 func NewSigstoreTufClient() (*sigstoreTuf.Client, error) {
 	_, filename, _, ok := runtime.Caller(1)
 	if !ok {
@@ -73,13 +73,13 @@ func GetNpmjsKeysTarget(client SigstoreTufClient, targetPath string) (*NpmjsKeys
 }
 
 /*
-GetAttestationKeyMaterialByKeyId Given our set of keys, return the target key's material.
+GetAttestationKeyMaterialByKeyID Given our set of keys, return the target key's material.
 It also checks that the keyUsage is "nmp:attestations", but we may also want to check
 the existing ValidFor.Start (and a potential future ValidFor.End).
 */
-func GetAttestationKeyMaterialByKeyId(keys *NpmjsKeysTarget, keyId string) (string, error) {
+func GetAttestationKeyMaterialByKeyID(keys *NpmjsKeysTarget, keyID string) (string, error) {
 	for _, key := range keys.Keys {
-		if key.KeyID == keyId && key.KeyUsage == KeyUsage {
+		if key.KeyID == keyID && key.KeyUsage == KeyUsage {
 			return key.PublicKey.RawBytes, nil
 		}
 	}

@@ -45,7 +45,7 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	npmRegistryPublicKey, err = GetAttestationKeyMaterialByKeyId(keys, npmRegistryPublicKeyID)
+	npmRegistryPublicKey, err = GetAttestationKeyMaterialByKeyID(keys, npmRegistryPublicKeyID)
 	if err != nil {
 		log.Fatal(err)
 	}

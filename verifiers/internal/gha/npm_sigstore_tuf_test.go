@@ -53,12 +53,12 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 	})
 }
 
-// TestGetAttestationKeyMaterialByKeyId ensure that we find the "npm:attestations" key material, given keyid
-func TestGetAttestationKeyMaterialByKeyId(t *testing.T) {
+// TestGetAttestationKeyMaterialByKeyID ensure that we find the "npm:attestations" key material, given keyid
+func TestGetAttestationKeyMaterialByKeyID(t *testing.T) {
 	tests := []struct {
 		name                string
 		localPath           string
-		keyId               string
+		keyID               string
 		keyUsage            string
 		expectedKeyMaterial string
 		expectError         bool
@@ -66,14 +66,14 @@ func TestGetAttestationKeyMaterialByKeyId(t *testing.T) {
 		{
 			name:                "npmjs' first attestation key",
 			localPath:           testTargetLocalFilePath,
-			keyId:               testTargetKeyId,
+			keyID:               testTargetKeyId,
 			expectedKeyMaterial: testTargetKeyMaterial,
 			expectError:         false,
 		},
 		{
 			name:                "missing the 'npm:attestations' keyusage",
 			localPath:           "./testdata/wrong_keyusage_registry.npmjs.org_keys.json",
-			keyId:               testTargetKeyId,
+			keyID:               testTargetKeyId,
 			expectedKeyMaterial: testTargetKeyMaterial,
 			expectError:         true,
 		},
@@ -83,7 +83,7 @@ func TestGetAttestationKeyMaterialByKeyId(t *testing.T) {
 			mockClient := mockSigstoreTufClient{localPath: tt.localPath}
 			keys, err := GetNpmjsKeysTarget(mockClient, tt.localPath)
 			assert.NoError(t, err)
-			actualKeyMaterial, err := GetAttestationKeyMaterialByKeyId(keys, tt.keyId)
+			actualKeyMaterial, err := GetAttestationKeyMaterialByKeyID(keys, tt.keyID)
 			if !tt.expectError {
 				assert.NoError(t, err)
 				assert.Equalf(t, tt.expectedKeyMaterial, actualKeyMaterial, "key materials do not match")
