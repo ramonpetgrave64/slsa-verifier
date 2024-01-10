@@ -78,7 +78,7 @@ func GetNpmjsKeysTarget(client SigstoreTufClient, targetPath string) (*NpmjsKeys
 GetKeyDataWithNpmjsKeysTarget Given our set of keys, return the target key's material.
 We may also want to check the existing ValidFor.Start (and a potential future ValidFor.End).
 */
-func GetKeyDataWithNpmjsKeysTarget(keys *NpmjsKeysTarget, keyID string, keyUsage string) (string, error) {
+func GetKeyDataWithNpmjsKeysTarget(keys *NpmjsKeysTarget, keyID, keyUsage string) (string, error) {
 	for _, key := range keys.Keys {
 		if key.KeyID == keyID && key.KeyUsage == keyUsage {
 			return key.PublicKey.RawBytes, nil
@@ -97,7 +97,7 @@ example params:
 	keyID: "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
 	keyUsage: "npm:attestations"
 */
-func GetKeyDataFromSigstoreTuf(keyID string, keyUsage string) (string, error) {
+func GetKeyDataFromSigstoreTuf(keyID, keyUsage string) (string, error) {
 	client, err := NewSigstoreTufClient()
 	if err != nil {
 		return "", err
