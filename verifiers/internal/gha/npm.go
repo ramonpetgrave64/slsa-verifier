@@ -35,7 +35,7 @@ const npmRegistryPublicKeyID = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1k
 
 var npmRegistryPublicKey string
 
-// init initializes the npmRegistryPublicKey from the SigstoreTufClient
+// init initializes the npmRegistryPublicKey from the SigstoreTufClient.
 func init() {
 	client, err := NewSigstoreTufClient()
 	if err != nil {

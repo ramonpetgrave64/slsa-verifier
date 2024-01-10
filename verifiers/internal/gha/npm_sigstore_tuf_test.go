@@ -11,17 +11,17 @@ import (
 
 const (
 	testTargetLocalFilePath = "./testdata/registry.npmjs.org_keys.json"
-	testTargetKeyId         = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+	testTargetKeyID         = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
 	testTargetKeyMaterial   = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1Olb3zMAFFxXKHiIkQO5cJ3Yhl5i6UPp+IhuteBJbuHcA5UogKo0EWtlWwW6KSaKoTNEYL7JlCQiVnkhBktUgg=="
 )
 
-// mockSigstoreTufClient a mock implementation of SigstoreTufClient
+// mockSigstoreTufClient a mock implementation of SigstoreTufClient.
 type mockSigstoreTufClient struct {
 	SigstoreTufClient
 	localPath string
 }
 
-// GetTarget mock implementation of GetTarget for the mockSigstoreTufClient
+// GetTarget mock implementation of GetTarget for the mockSigstoreTufClient.
 func (client mockSigstoreTufClient) GetTarget(targetPath string) ([]byte, error) {
 	content, err := os.ReadFile(targetPath)
 	if err != nil {
@@ -30,7 +30,7 @@ func (client mockSigstoreTufClient) GetTarget(targetPath string) ([]byte, error)
 	return content, nil
 }
 
-// TestGetTarget ensures we can parse the target file
+// TestGetTarget ensures we can parse the target file.
 func TestGetNpmjsKeysTarget(t *testing.T) {
 	t.Run("parsing local registry.npmjs.org_keys.json", func(t *testing.T) {
 		content, err := os.ReadFile(testTargetLocalFilePath)
@@ -45,7 +45,7 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 		assert.EqualValues(t, expectedKeys, *actualKeys)
 	})
 
-	t.Run("parsing non-existant registry.npmjs.org_keys.json", func(t *testing.T) {
+	t.Run("parsing non-existent registry.npmjs.org_keys.json", func(t *testing.T) {
 		nonExistantPath := "./testdata/my-fake-path"
 		mockClient := mockSigstoreTufClient{localPath: nonExistantPath}
 		_, err := GetNpmjsKeysTarget(mockClient, nonExistantPath)
@@ -53,7 +53,7 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 	})
 }
 
-// TestGetAttestationKeyMaterialByKeyID ensure that we find the "npm:attestations" key material, given keyid
+// TestGetAttestationKeyMaterialByKeyID ensure that we find the "npm:attestations" key material, given keyid.
 func TestGetAttestationKeyMaterialByKeyID(t *testing.T) {
 	tests := []struct {
 		name                string
@@ -66,14 +66,14 @@ func TestGetAttestationKeyMaterialByKeyID(t *testing.T) {
 		{
 			name:                "npmjs' first attestation key",
 			localPath:           testTargetLocalFilePath,
-			keyID:               testTargetKeyId,
+			keyID:               testTargetKeyID,
 			expectedKeyMaterial: testTargetKeyMaterial,
 			expectError:         false,
 		},
 		{
 			name:                "missing the 'npm:attestations' keyusage",
 			localPath:           "./testdata/wrong_keyusage_registry.npmjs.org_keys.json",
-			keyID:               testTargetKeyId,
+			keyID:               testTargetKeyID,
 			expectedKeyMaterial: testTargetKeyMaterial,
 			expectError:         true,
 		},
