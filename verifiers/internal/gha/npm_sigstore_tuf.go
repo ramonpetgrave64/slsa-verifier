@@ -79,12 +79,7 @@ the existing ValidFor.Start (and a potential future ValidFor.End).
 */
 func GetAttestationKeyMaterialByKeyId(keys *NpmjsKeysTarget, keyId string) (string, error) {
 	for _, key := range keys.Keys {
-		if !(key.KeyID == keyId && key.KeyUsage == KeyUsage) {
-			continue
-			// additional verification
-		} else if key.KeyUsage != KeyUsage {
-			return "", fmt.Errorf("given key does not specify 'keyUsage':'%s'", KeyUsage)
-		} else {
+		if key.KeyID == keyId && key.KeyUsage == KeyUsage {
 			return key.PublicKey.RawBytes, nil
 		}
 	}
