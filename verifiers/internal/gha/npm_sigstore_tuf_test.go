@@ -12,7 +12,8 @@ import (
 const (
 	testTargetLocalFilePath = "./testdata/registry.npmjs.org_keys.json"
 	testTargetKeyID         = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
-	testTargetKeyMaterial   = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1Olb3zMAFFxXKHiIkQO5cJ3Yhl5i6UPp+IhuteBJbuHcA5UogKo0EWtlWwW6KSaKoTNEYL7JlCQiVnkhBktUgg=="
+	testTargetKeyUsage      = "npm:attestations"
+	testTargetKeyData       = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1Olb3zMAFFxXKHiIkQO5cJ3Yhl5i6UPp+IhuteBJbuHcA5UogKo0EWtlWwW6KSaKoTNEYL7JlCQiVnkhBktUgg=="
 )
 
 // mockSigstoreTufClient a mock implementation of SigstoreTufClient.
@@ -53,29 +54,31 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 	})
 }
 
-// TestGetAttestationKeyMaterialByKeyID ensure that we find the "npm:attestations" key material, given keyid.
-func TestGetAttestationKeyMaterialByKeyID(t *testing.T) {
+// TestGetKeyDataWithNpmjsKeysTarget ensure that we find the "npm:attestations" key material, given keyid.
+func TestGetKeyDataWithNpmjsKeysTarget(t *testing.T) {
 	tests := []struct {
-		name                string
-		localPath           string
-		keyID               string
-		keyUsage            string
-		expectedKeyMaterial string
-		expectError         bool
+		name            string
+		localPath       string
+		keyID           string
+		keyUsage        string
+		expectedKeyData string
+		expectError     bool
 	}{
 		{
-			name:                "npmjs' first attestation key",
-			localPath:           testTargetLocalFilePath,
-			keyID:               testTargetKeyID,
-			expectedKeyMaterial: testTargetKeyMaterial,
-			expectError:         false,
+			name:            "npmjs' first attestation key",
+			localPath:       testTargetLocalFilePath,
+			keyID:           testTargetKeyID,
+			keyUsage:        testTargetKeyUsage,
+			expectedKeyData: testTargetKeyData,
+			expectError:     false,
 		},
 		{
-			name:                "missing the 'npm:attestations' keyusage",
-			localPath:           "./testdata/wrong_keyusage_registry.npmjs.org_keys.json",
-			keyID:               testTargetKeyID,
-			expectedKeyMaterial: testTargetKeyMaterial,
-			expectError:         true,
+			name:            "missing the 'npm:attestations' keyusage",
+			localPath:       "./testdata/wrong_keyusage_registry.npmjs.org_keys.json",
+			keyID:           testTargetKeyID,
+			keyUsage:        testTargetKeyUsage,
+			expectedKeyData: testTargetKeyData,
+			expectError:     true,
 		},
 	}
 	for _, tt := range tests {
@@ -83,13 +86,13 @@ func TestGetAttestationKeyMaterialByKeyID(t *testing.T) {
 			mockClient := mockSigstoreTufClient{localPath: tt.localPath}
 			keys, err := GetNpmjsKeysTarget(mockClient, tt.localPath)
 			assert.NoError(t, err)
-			actualKeyMaterial, err := GetAttestationKeyMaterialByKeyID(keys, tt.keyID)
+			actualKeyData, err := GetKeyDataWithNpmjsKeysTarget(keys, tt.keyID, tt.keyUsage)
 			if !tt.expectError {
 				assert.NoError(t, err)
-				assert.Equalf(t, tt.expectedKeyMaterial, actualKeyMaterial, "key materials do not match")
+				assert.Equalf(t, tt.expectedKeyData, actualKeyData, "key materials do not match")
 			} else {
 				assert.Errorf(t, err, "expected an error")
-				assert.Emptyf(t, actualKeyMaterial, "expetced no value")
+				assert.Emptyf(t, actualKeyData, "expetced no value")
 			}
 		})
 	}

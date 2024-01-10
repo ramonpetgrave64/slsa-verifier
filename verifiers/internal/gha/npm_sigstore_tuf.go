@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	KeyUsage   = "npm:attestations"
-	KeyID      = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
-	TargetPath = "registry.npmjs.org/keys.json"
+	AttestationKeyUsage = "npm:attestations"
+	AttestationKeyID    = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+	TargetPath          = "registry.npmjs.org/keys.json"
 )
 
 // NpmjsKeysTarget describes the structure of the target file.
@@ -72,16 +72,43 @@ func GetNpmjsKeysTarget(client SigstoreTufClient, targetPath string) (*NpmjsKeys
 	return &keys, nil
 }
 
+// func GetKeyDataByKeyIdAndUsage(keys *NpmjsKeysTarget, keyID string, keyUsage) (string, error)
+
 /*
-GetAttestationKeyMaterialByKeyID Given our set of keys, return the target key's material.
-It also checks that the keyUsage is "nmp:attestations", but we may also want to check
-the existing ValidFor.Start (and a potential future ValidFor.End).
+GetKeyDataWithNpmjsKeysTarget Given our set of keys, return the target key's material.
+We may also want to check the existing ValidFor.Start (and a potential future ValidFor.End).
 */
-func GetAttestationKeyMaterialByKeyID(keys *NpmjsKeysTarget, keyID string) (string, error) {
+func GetKeyDataWithNpmjsKeysTarget(keys *NpmjsKeysTarget, keyID string, keyUsage string) (string, error) {
 	for _, key := range keys.Keys {
-		if key.KeyID == keyID && key.KeyUsage == KeyUsage {
+		if key.KeyID == keyID && key.KeyUsage == keyUsage {
 			return key.PublicKey.RawBytes, nil
 		}
 	}
-	return "", fmt.Errorf("could not find key with 'keyUsage':'npm:signatures'")
+	return "", fmt.Errorf("could not find key with 'keyUsage':%s", keyUsage)
+}
+
+/*
+GetKeyDataFromSigstoreTuf given a keyid and keyusage, retriive the keyfile from sigstore's TUF root,
+parse the file and return the soecific key material.
+See documentation for GetNpmjsKeysTarget
+
+example params:
+
+	keyID: "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+	keyUsage: "npm:attestations"
+*/
+func GetKeyDataFromSigstoreTuf(keyID string, keyUsage string) (string, error) {
+	client, err := NewSigstoreTufClient()
+	if err != nil {
+		return "", err
+	}
+	keys, err := GetNpmjsKeysTarget(client, TargetPath)
+	if err != nil {
+		return "", err
+	}
+	KeyData, err := GetKeyDataWithNpmjsKeysTarget(keys, keyID, keyUsage)
+	if err != nil {
+		return "", err
+	}
+	return KeyData, nil
 }

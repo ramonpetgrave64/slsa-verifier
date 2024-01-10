@@ -33,24 +33,6 @@ var errrorInvalidAttestations = errors.New("invalid npm attestations")
 
 const npmRegistryPublicKeyID = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
 
-var npmRegistryPublicKey string
-
-// init initializes the npmRegistryPublicKey from the SigstoreTufClient.
-func init() {
-	client, err := NewSigstoreTufClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-	keys, err := GetNpmjsKeysTarget(client, TargetPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	npmRegistryPublicKey, err = GetAttestationKeyMaterialByKeyID(keys, npmRegistryPublicKeyID)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 type attestationSet struct {
 	Attestations []attestation `json:"attestations"`
 }
@@ -144,6 +126,12 @@ func (n *Npm) verifyPublishAttestationSignature() error {
 	signedPublish, err := verifyBundleAndEntryFromBytes(n.ctx, n.publishAttestation.BundleBytes, n.root, false)
 	if err != nil {
 		return err
+	}
+
+	// retrieve the key material
+	npmRegistryPublicKey, err := GetKeyDataFromSigstoreTuf(npmRegistryPublicKeyID, AttestationKeyUsage)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Verify the PAE signature.
