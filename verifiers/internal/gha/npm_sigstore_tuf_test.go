@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/google/go-cmp/cmp"
 )
 
 const (
@@ -35,22 +35,34 @@ func (client mockSigstoreTufClient) GetTarget(targetPath string) ([]byte, error)
 func TestGetNpmjsKeysTarget(t *testing.T) {
 	t.Run("parsing local registry.npmjs.org_keys.json", func(t *testing.T) {
 		content, err := os.ReadFile(testTargetLocalFilePath)
-		assert.NoErrorf(t, err, "reading local file: %s", err)
+		if err != nil {
+			t.Errorf("reading local file: %s", err)
+		}
 		var expectedKeys NpmjsKeysTarget
 		err = json.Unmarshal(content, &expectedKeys)
-		assert.NoErrorf(t, err, "parsing mock file: %s", err)
-
+		if err != nil {
+			t.Errorf("parsing mock file: %s", err)
+		}
 		mockClient := mockSigstoreTufClient{localPath: testTargetLocalFilePath}
 		actualKeys, err := GetNpmjsKeysTarget(mockClient, testTargetLocalFilePath)
-		assert.NoError(t, err)
-		assert.EqualValues(t, expectedKeys, *actualKeys)
+		if err != nil {
+			t.Error(err)
+		}
+		if err != nil {
+			t.Error(err)
+		}
+		if !cmp.Equal(expectedKeys, *actualKeys) {
+			t.Errorf("expected equal values: \nexpected: %v \nactual: %v", expectedKeys, *actualKeys)
+		}
 	})
 
 	t.Run("parsing non-existent registry.npmjs.org_keys.json", func(t *testing.T) {
 		nonExistantPath := "./testdata/my-fake-path"
 		mockClient := mockSigstoreTufClient{localPath: nonExistantPath}
 		_, err := GetNpmjsKeysTarget(mockClient, nonExistantPath)
-		assert.Error(t, err)
+		if err == nil {
+			t.Error("expected an error")
+		}
 	})
 }
 
@@ -77,7 +89,7 @@ func TestGetKeyDataWithNpmjsKeysTarget(t *testing.T) {
 			localPath:       "./testdata/wrong_keyusage_registry.npmjs.org_keys.json",
 			keyID:           testTargetKeyID,
 			keyUsage:        testTargetKeyUsage,
-			expectedKeyData: testTargetKeyData,
+			expectedKeyData: "", // should not be returned in this error case
 			expectError:     true,
 		},
 	}
@@ -85,14 +97,24 @@ func TestGetKeyDataWithNpmjsKeysTarget(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := mockSigstoreTufClient{localPath: tt.localPath}
 			keys, err := GetNpmjsKeysTarget(mockClient, tt.localPath)
-			assert.NoError(t, err)
+			if err != nil {
+				t.Error(err)
+			}
 			actualKeyData, err := GetKeyDataWithNpmjsKeysTarget(keys, tt.keyID, tt.keyUsage)
 			if !tt.expectError {
-				assert.NoError(t, err)
-				assert.Equalf(t, tt.expectedKeyData, actualKeyData, "key materials do not match")
+				if err != nil {
+					t.Error(err)
+				}
+				if tt.expectedKeyData != actualKeyData {
+					t.Errorf("expected equal values: \nexpected: %v \nactual: %v", tt.expectedKeyData, actualKeyData)
+				}
 			} else {
-				assert.Errorf(t, err, "expected an error")
-				assert.Emptyf(t, actualKeyData, "expetced no value")
+				if err == nil {
+					t.Error("expected and error")
+				}
+				if actualKeyData != "" {
+					t.Error("expected no returned key data")
+				}
 			}
 		})
 	}
