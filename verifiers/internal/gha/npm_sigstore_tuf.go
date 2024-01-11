@@ -86,7 +86,7 @@ func getKeyDataWithNpmjsKeysTarget(keys *npmjsKeysTarget, keyID, keyUsage string
 
 /*
 getKeyDataFromSigstoreTuf given a keyid and keyusage, retriive the keyfile from sigstore's TUF root,
-parse the file and return the soecific key material.
+parse the file and return the specific key material.
 See documentation for getNpmjsKeysTarget
 
 example params:
