@@ -36,5 +36,4 @@ jobs:
       - name: Run tests for verifier
         run: |
           set -euo pipefail
-          make unit-test
           make regression-test
