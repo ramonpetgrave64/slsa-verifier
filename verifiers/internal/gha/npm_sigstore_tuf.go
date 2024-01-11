@@ -3,7 +3,6 @@ package gha
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"path"
 	"runtime"
 	"time"
@@ -43,7 +42,7 @@ type SigstoreTufClient interface {
 func NewSigstoreTufClient() (*sigstoreTuf.Client, error) {
 	_, filename, _, ok := runtime.Caller(1)
 	if !ok {
-		log.Fatal("unable to get path")
+		return nil, fmt.Errorf("unable to get path")
 	}
 	opts := sigstoreTuf.DefaultOptions()
 	opts.CachePath = path.Join(path.Dir(filename), "tufdata")
