@@ -18,7 +18,6 @@ const (
 
 // mockSigstoreTufClient a mock implementation of sigstoreTufClient.
 type mockSigstoreTufClient struct {
-	sigstoreTufClient
 	localPath string
 }
 
