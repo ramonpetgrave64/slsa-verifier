@@ -16,9 +16,9 @@ const (
 	testTargetKeyData       = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1Olb3zMAFFxXKHiIkQO5cJ3Yhl5i6UPp+IhuteBJbuHcA5UogKo0EWtlWwW6KSaKoTNEYL7JlCQiVnkhBktUgg=="
 )
 
-// mockSigstoreTufClient a mock implementation of SigstoreTufClient.
+// mockSigstoreTufClient a mock implementation of sigstoreTufClient.
 type mockSigstoreTufClient struct {
-	SigstoreTufClient
+	sigstoreTufClient
 	localPath string
 }
 
@@ -31,20 +31,20 @@ func (client mockSigstoreTufClient) GetTarget(targetPath string) ([]byte, error)
 	return content, nil
 }
 
-// TestGetTarget ensures we can parse the target file.
+// TestGetNpmjsKeysTarget ensures we can parse the target file.
 func TestGetNpmjsKeysTarget(t *testing.T) {
 	t.Run("parsing local registry.npmjs.org_keys.json", func(t *testing.T) {
 		content, err := os.ReadFile(testTargetLocalFilePath)
 		if err != nil {
 			t.Errorf("reading local file: %s", err)
 		}
-		var expectedKeys NpmjsKeysTarget
+		var expectedKeys npmjsKeysTarget
 		err = json.Unmarshal(content, &expectedKeys)
 		if err != nil {
 			t.Errorf("parsing mock file: %s", err)
 		}
 		mockClient := mockSigstoreTufClient{localPath: testTargetLocalFilePath}
-		actualKeys, err := GetNpmjsKeysTarget(mockClient, testTargetLocalFilePath)
+		actualKeys, err := getNpmjsKeysTarget(mockClient, testTargetLocalFilePath)
 		if err != nil {
 			t.Error(err)
 		}
@@ -59,7 +59,7 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 	t.Run("parsing non-existent registry.npmjs.org_keys.json", func(t *testing.T) {
 		nonExistantPath := "./testdata/my-fake-path"
 		mockClient := mockSigstoreTufClient{localPath: nonExistantPath}
-		_, err := GetNpmjsKeysTarget(mockClient, nonExistantPath)
+		_, err := getNpmjsKeysTarget(mockClient, nonExistantPath)
 		if err == nil {
 			t.Error("expected an error")
 		}
@@ -96,11 +96,11 @@ func TestGetKeyDataWithNpmjsKeysTarget(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := mockSigstoreTufClient{localPath: tt.localPath}
-			keys, err := GetNpmjsKeysTarget(mockClient, tt.localPath)
+			keys, err := getNpmjsKeysTarget(mockClient, tt.localPath)
 			if err != nil {
 				t.Error(err)
 			}
-			actualKeyData, err := GetKeyDataWithNpmjsKeysTarget(keys, tt.keyID, tt.keyUsage)
+			actualKeyData, err := getKeyDataWithNpmjsKeysTarget(keys, tt.keyID, tt.keyUsage)
 			if !tt.expectError {
 				if err != nil {
 					t.Error(err)
