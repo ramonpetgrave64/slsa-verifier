@@ -128,7 +128,7 @@ func (n *Npm) verifyPublishAttestationSignature() error {
 		return err
 	}
 
-	// retrieve the key material
+	// Retrieve the key material.
 	npmRegistryPublicKey, err := GetKeyDataFromSigstoreTuf(npmRegistryPublicKeyID, AttestationKeyUsage)
 	if err != nil {
 		log.Fatal(err)
