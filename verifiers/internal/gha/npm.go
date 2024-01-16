@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"strings"
 
@@ -131,7 +130,7 @@ func (n *Npm) verifyPublishAttestationSignature() error {
 	// Retrieve the key material.
 	npmRegistryPublicKey, err := getKeyDataFromSigstoreTuf(npmRegistryPublicKeyID, attestationKeyUsage)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Verify the PAE signature.
