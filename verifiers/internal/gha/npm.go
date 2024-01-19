@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync/atomic"
 
 	intoto "github.com/in-toto/in-toto-golang/in_toto"
 	"github.com/secure-systems-lab/go-securesystemslib/dsse"
@@ -29,6 +30,7 @@ const (
 )
 
 var errrorInvalidAttestations = errors.New("invalid npm attestations")
+var attestationKeyAtomicValue atomic.Value
 
 const npmRegistryPublicKeyID = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
 
@@ -110,6 +112,20 @@ func extractAttestations(attestations []attestation) (*attestation, *attestation
 	return provenanceAttestation, publishAttestation, nil
 }
 
+// getAttestationKey retrieves the attestation key and holds it in memory
+func getAttestationKey() (string, error) {
+	value := attestationKeyAtomicValue.Load()
+	if value != nil {
+		return value.(string), nil
+	}
+	npmRegistryPublicKey, err := getKeyDataFromSigstoreTuf(npmRegistryPublicKeyID, attestationKeyUsage)
+	if err != nil {
+		return "", err
+	}
+	attestationKeyAtomicValue.Store(npmRegistryPublicKey)
+	return npmRegistryPublicKey, nil
+}
+
 func (n *Npm) verifyProvenanceAttestationSignature() error {
 	// Re-use the standard bundle verification.
 	signedProvenance, err := VerifyProvenanceBundle(n.ctx, n.provenanceAttestation.BundleBytes, n.root)
@@ -128,7 +144,7 @@ func (n *Npm) verifyPublishAttestationSignature() error {
 	}
 
 	// Retrieve the key material.
-	npmRegistryPublicKey, err := getKeyDataFromSigstoreTuf(npmRegistryPublicKeyID, attestationKeyUsage)
+	npmRegistryPublicKey, err := getAttestationKey()
 	if err != nil {
 		return err
 	}
