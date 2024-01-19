@@ -3,8 +3,6 @@ package gha
 import (
 	"encoding/json"
 	"fmt"
-	"path"
-	"runtime"
 	"time"
 
 	sigstoreTuf "github.com/sigstore/sigstore-go/pkg/tuf"
@@ -40,12 +38,7 @@ type sigstoreTufClient interface {
 
 // newSigstoreTufClient Get a Sigstore TUF client, which itself is a wrapper around the official TUF client.
 func newSigstoreTufClient() (*sigstoreTuf.Client, error) {
-	_, filename, _, ok := runtime.Caller(1)
-	if !ok {
-		return nil, fmt.Errorf("unable to get path")
-	}
 	opts := sigstoreTuf.DefaultOptions()
-	opts.CachePath = path.Join(path.Dir(filename), "tufdata")
 	client, err := sigstoreTuf.New(opts)
 	if err != nil {
 		return nil, fmt.Errorf("creating SigstoreTuf client: %w", err)
