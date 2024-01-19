@@ -112,7 +112,7 @@ func extractAttestations(attestations []attestation) (*attestation, *attestation
 	return provenanceAttestation, publishAttestation, nil
 }
 
-// getAttestationKey retrieves the attestation key and holds it in memory
+// getAttestationKey retrieves the attestation key and holds it in memory.
 func getAttestationKey() (string, error) {
 	value := attestationKeyAtomicValue.Load()
 	if value != nil {
