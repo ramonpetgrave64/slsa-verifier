@@ -35,12 +35,12 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 	t.Run("parsing local registry.npmjs.org_keys.json", func(t *testing.T) {
 		content, err := os.ReadFile(testTargetLocalFilePath)
 		if err != nil {
-			t.Errorf("reading local file: %s", err)
+			t.Errorf("reading local file: %w", err)
 		}
 		var expectedKeys npmjsKeysTarget
 		err = json.Unmarshal(content, &expectedKeys)
 		if err != nil {
-			t.Errorf("parsing mock file: %s", err)
+			t.Errorf("parsing mock file: %w", err)
 		}
 		mockClient := mockSigstoreTufClient{localPath: testTargetLocalFilePath}
 		actualKeys, err := getNpmjsKeysTarget(mockClient, testTargetLocalFilePath)
