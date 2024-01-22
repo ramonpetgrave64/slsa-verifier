@@ -123,7 +123,7 @@ func TestGetKeyDataWithNpmjsKeysTarget(t *testing.T) {
 			mockClient := mockSigstoreTufClient{localPath: tt.localPath}
 			keys, err := getNpmjsKeysTarget(mockClient, tt.localPath)
 			if err != nil {
-				t.Error(err)
+				t.Fatalf("getNpmjsKeysTarget: %v", err)
 			}
 			actualKeyData, err := getKeyDataWithNpmjsKeysTarget(keys, tt.keyID, tt.keyUsage)
 			if keyDataDiff := cmp.Diff(tt.expectedKeyData, actualKeyData); keyDataDiff != "" {
