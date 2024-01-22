@@ -57,8 +57,7 @@ func getNpmjsKeysTarget(client sigstoreTufClient, targetPath string) (*npmjsKeys
 		return nil, fmt.Errorf("getting target: %w", err)
 	}
 	var keys npmjsKeysTarget
-	err = json.Unmarshal(blob, &keys)
-	if err != nil {
+	if err := json.Unmarshal(blob, &keys); err != nil {
 		return nil, fmt.Errorf("parsing target: %w", err)
 	}
 	return &keys, nil

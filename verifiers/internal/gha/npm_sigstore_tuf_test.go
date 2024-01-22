@@ -38,8 +38,7 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 			t.Errorf("reading local file: %w", err)
 		}
 		var expectedKeys npmjsKeysTarget
-		err = json.Unmarshal(content, &expectedKeys)
-		if err != nil {
+		if err := json.Unmarshal(content, &expectedKeys); err != nil {
 			t.Errorf("parsing mock file: %w", err)
 		}
 		mockClient := mockSigstoreTufClient{localPath: testTargetLocalFilePath}
