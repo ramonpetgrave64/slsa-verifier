@@ -46,18 +46,18 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if err != nil {
-			t.Error(err)
-		}
-		if !cmp.Equal(expectedKeys, *actualKeys) {
-			t.Errorf("expected equal values: \nexpected: %v \nactual: %v", expectedKeys, *actualKeys)
+		if diff := cmp.Diff(expectedKeys, *actualKeys); diff != "" {
+			t.Errorf("expected equal values (-want +got):\n%s", diff)
 		}
 	})
 
 	t.Run("parsing non-existent registry.npmjs.org_keys.json", func(t *testing.T) {
 		nonExistantPath := "./testdata/my-fake-path"
 		mockClient := mockSigstoreTufClient{localPath: nonExistantPath}
-		_, err := getNpmjsKeysTarget(mockClient, nonExistantPath)
+		actualKeys, err := getNpmjsKeysTarget(mockClient, nonExistantPath)
+		if actualKeys != nil {
+			t.Errorf("expected nil, got: %v", actualKeys)
+		}
 		if err == nil {
 			t.Error("expected an error")
 		}
