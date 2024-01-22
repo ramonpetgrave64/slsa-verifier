@@ -2,6 +2,7 @@ package gha
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,6 +13,11 @@ const (
 	attestationKeyUsage = "npm:attestations"
 	attestationKeyID    = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
 	targetPath          = "registry.npmjs.org/keys.json"
+)
+
+var (
+	ErrorMissingNpmjsKeyIdKeyUsage = errors.New("could not find a key with the specified 'keyId' and 'keyUsage'")
+	ErrorCouldNotFindTarget        = errors.New("could not get the target from the tuf root")
 )
 
 // npmjsKeysTarget describes the structure of the target file.
@@ -54,7 +60,7 @@ https://github.com/sigstore/root-signing/blob/5fd11f7ec0a993b0f20c335b33e53cfffb
 func getNpmjsKeysTarget(client sigstoreTufClient, targetPath string) (*npmjsKeysTarget, error) {
 	blob, err := client.GetTarget(targetPath)
 	if err != nil {
-		return nil, fmt.Errorf("getting target: %w", err)
+		return nil, fmt.Errorf("%w: %w", ErrorCouldNotFindTarget, err)
 	}
 	var keys npmjsKeysTarget
 	if err := json.Unmarshal(blob, &keys); err != nil {
@@ -73,7 +79,7 @@ func getKeyDataWithNpmjsKeysTarget(keys *npmjsKeysTarget, keyID, keyUsage string
 			return key.PublicKey.RawBytes, nil
 		}
 	}
-	return "", fmt.Errorf("could not find key with 'keyUsage':%s", keyUsage)
+	return "", fmt.Errorf("%w: 'keyId': %s, 'keyUsage':%s", ErrorMissingNpmjsKeyIdKeyUsage, keyID, keyUsage)
 }
 
 /*

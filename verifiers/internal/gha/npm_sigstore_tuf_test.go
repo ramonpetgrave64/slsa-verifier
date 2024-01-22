@@ -1,19 +1,48 @@
 package gha
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-const (
-	testTargetLocalFilePath = "./testdata/registry.npmjs.org_keys.json"
-	testTargetKeyID         = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
-	testTargetKeyUsage      = "npm:attestations"
-	testTargetKeyData       = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1Olb3zMAFFxXKHiIkQO5cJ3Yhl5i6UPp+IhuteBJbuHcA5UogKo0EWtlWwW6KSaKoTNEYL7JlCQiVnkhBktUgg=="
+const testTargetLocalFilePath = "./testdata/registry.npmjs.org_keys.json"
+
+var (
+	testTargetKeys = npmjsKeysTarget{
+		Keys: []key{
+			{
+				KeyID:    "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA",
+				KeyUsage: "npm:signatures",
+				PublicKey: publicKey{
+					RawBytes:   "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1Olb3zMAFFxXKHiIkQO5cJ3Yhl5i6UPp+IhuteBJbuHcA5UogKo0EWtlWwW6KSaKoTNEYL7JlCQiVnkhBktUgg==",
+					KeyDetails: "PKIX_ECDSA_P256_SHA_256",
+					ValidFor: validFor{
+						Start: time.Date(1999, time.January, 1, 0, 0, 0, 0, time.UTC),
+					},
+				},
+			},
+			{
+				KeyID:    "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA",
+				KeyUsage: "npm:attestations",
+				PublicKey: publicKey{
+					RawBytes:   "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1Olb3zMAFFxXKHiIkQO5cJ3Yhl5i6UPp+IhuteBJbuHcA5UogKo0EWtlWwW6KSaKoTNEYL7JlCQiVnkhBktUgg==",
+					KeyDetails: "PKIX_ECDSA_P256_SHA_256",
+					ValidFor: validFor{
+						Start: time.Date(2022, time.December, 1, 0, 0, 0, 0, time.UTC),
+					},
+				},
+			},
+		},
+	}
+	targetKey          = testTargetKeys.Keys[1]
+	testTargetKeyID    = targetKey.KeyID
+	testTargetKeyUsage = targetKey.KeyUsage
+	testTargetKeyData  = targetKey.PublicKey.RawBytes
 )
 
 // mockSigstoreTufClient a mock implementation of sigstoreTufClient.
@@ -32,36 +61,35 @@ func (client mockSigstoreTufClient) GetTarget(targetPath string) ([]byte, error)
 
 // TestGetNpmjsKeysTarget ensures we can parse the target file.
 func TestGetNpmjsKeysTarget(t *testing.T) {
-	t.Run("parsing local registry.npmjs.org_keys.json", func(t *testing.T) {
-		content, err := os.ReadFile(testTargetLocalFilePath)
-		if err != nil {
-			t.Errorf("reading local file: %v", err)
-		}
-		var expectedKeys npmjsKeysTarget
-		if err := json.Unmarshal(content, &expectedKeys); err != nil {
-			t.Errorf("parsing mock file: %v", err)
-		}
-		mockClient := mockSigstoreTufClient{localPath: testTargetLocalFilePath}
-		actualKeys, err := getNpmjsKeysTarget(mockClient, testTargetLocalFilePath)
-		if err != nil {
-			t.Error(err)
-		}
-		if diff := cmp.Diff(expectedKeys, *actualKeys); diff != "" {
-			t.Errorf("expected equal values (-want +got):\n%s", diff)
-		}
-	})
-
-	t.Run("parsing non-existent registry.npmjs.org_keys.json", func(t *testing.T) {
-		nonExistantPath := "./testdata/my-fake-path"
-		mockClient := mockSigstoreTufClient{localPath: nonExistantPath}
-		actualKeys, err := getNpmjsKeysTarget(mockClient, nonExistantPath)
-		if actualKeys != nil {
-			t.Errorf("expected nil, got: %v", actualKeys)
-		}
-		if err == nil {
-			t.Error("expected an error")
-		}
-	})
+	tests := []struct {
+		name         string
+		localPath    string
+		expectedKeys *npmjsKeysTarget
+		expectedErr  error
+	}{
+		{
+			name:         "parsing local registry.npmjs.org_keys.json",
+			localPath:    testTargetLocalFilePath,
+			expectedKeys: &testTargetKeys,
+		},
+		{
+			name:        "parsing non-existent registry.npmjs.org_keys.json",
+			localPath:   "./testdata/my-fake-path",
+			expectedErr: ErrorCouldNotFindTarget,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := mockSigstoreTufClient{localPath: tt.localPath}
+			actualKeys, err := getNpmjsKeysTarget(mockClient, tt.localPath)
+			if keyDataDiff := cmp.Diff(tt.expectedKeys, actualKeys, cmpopts.EquateComparable()); keyDataDiff != "" {
+				t.Errorf("expected equal values (-want +got):\n%s", keyDataDiff)
+			}
+			if errorDiff := cmp.Diff(tt.expectedErr, err, cmpopts.EquateErrors()); errorDiff != "" {
+				t.Errorf("expected equaivalent errors (-want +got):\n%s", errorDiff)
+			}
+		})
+	}
 }
 
 // TestGetKeyDataWithNpmjsKeysTarget ensure that we find the "npm:attestations" key material, given keyid.
@@ -72,7 +100,7 @@ func TestGetKeyDataWithNpmjsKeysTarget(t *testing.T) {
 		keyID           string
 		keyUsage        string
 		expectedKeyData string
-		expectError     bool
+		expectedErr     error
 	}{
 		{
 			name:            "npmjs' first attestation key",
@@ -80,7 +108,6 @@ func TestGetKeyDataWithNpmjsKeysTarget(t *testing.T) {
 			keyID:           testTargetKeyID,
 			keyUsage:        testTargetKeyUsage,
 			expectedKeyData: testTargetKeyData,
-			expectError:     false,
 		},
 		{
 			name:            "missing the 'npm:attestations' keyusage",
@@ -88,7 +115,7 @@ func TestGetKeyDataWithNpmjsKeysTarget(t *testing.T) {
 			keyID:           testTargetKeyID,
 			keyUsage:        testTargetKeyUsage,
 			expectedKeyData: "", // should not be returned in this error case
-			expectError:     true,
+			expectedErr:     ErrorMissingNpmjsKeyIdKeyUsage,
 		},
 	}
 	for _, tt := range tests {
@@ -99,20 +126,11 @@ func TestGetKeyDataWithNpmjsKeysTarget(t *testing.T) {
 				t.Error(err)
 			}
 			actualKeyData, err := getKeyDataWithNpmjsKeysTarget(keys, tt.keyID, tt.keyUsage)
-			if !tt.expectError {
-				if err != nil {
-					t.Error(err)
-				}
-				if tt.expectedKeyData != actualKeyData {
-					t.Errorf("expected equal values: \nexpected: %v \nactual: %v", tt.expectedKeyData, actualKeyData)
-				}
-			} else {
-				if err == nil {
-					t.Error("expected and error")
-				}
-				if actualKeyData != "" {
-					t.Error("expected no returned key data")
-				}
+			if keyDataDiff := cmp.Diff(tt.expectedKeyData, actualKeyData); keyDataDiff != "" {
+				t.Errorf("expected equal values (-want +got):\n%s", keyDataDiff)
+			}
+			if errorDiff := cmp.Diff(tt.expectedErr, err, cmpopts.EquateErrors()); errorDiff != "" {
+				t.Errorf("expected equaivalent errors (-want +got):\n%s", errorDiff)
 			}
 		})
 	}
