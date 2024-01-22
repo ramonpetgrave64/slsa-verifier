@@ -37,9 +37,19 @@ var (
 			}
 		]
 	}`
-	testTargetPath     = "registry.npmjs.org/keys.json"
-	mockFileContentMap = map[string]string{
-		testTargetPath: testTargetKeysFileContent,
+	testTargetInvalidJsonFileContent = `{
+		blah
+		"keys": [
+			{
+				"keyId": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+			}
+		]
+	}`
+	testTargetPath            = "my-registry.npmjs.org/keys.json"
+	testTargetInvalidJsonPath = "my-registry.npmjs.org/keys-invalid-json.json"
+	mockFileContentMap        = map[string]string{
+		testTargetPath:            testTargetKeysFileContent,
+		testTargetInvalidJsonPath: testTargetInvalidJsonFileContent,
 	}
 	testTargetKeys = npmjsKeysTarget{
 		Keys: []key{
@@ -109,6 +119,11 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 			targetPath:  "my-fake-path.json",
 			expectedErr: ErrorCouldNotFindTarget,
 		},
+		{
+			name:        "parsing invalid json",
+			targetPath:  testTargetInvalidJsonPath,
+			expectedErr: ErrorCouldNotParseKeys,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -118,7 +133,7 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 				t.Errorf("expected equal values (-want +got):\n%s", keyDataDiff)
 			}
 			if errorDiff := cmp.Diff(tt.expectedErr, err, cmpopts.EquateErrors()); errorDiff != "" {
-				log.Printf("want: %v, got: %v", tt.expectedErr, err)
+				log.Printf("want: %v, got: %v, type:%T", tt.expectedErr, err, err)
 				t.Errorf("expected equaivalent errors (-want +got):\n%s", errorDiff)
 			}
 		})

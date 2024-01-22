@@ -18,6 +18,7 @@ const (
 var (
 	ErrorMissingNpmjsKeyIDKeyUsage = errors.New("could not find a key with the specified 'keyId' and 'keyUsage'")
 	ErrorCouldNotFindTarget        = errors.New("could not get the target from the tuf root")
+	ErrorCouldNotParseKeys         = errors.New("could not parse keys file content")
 )
 
 // npmjsKeysTarget describes the structure of the target file.
@@ -64,7 +65,7 @@ func getNpmjsKeysTarget(client sigstoreTufClient, targetPath string) (*npmjsKeys
 	}
 	var keys npmjsKeysTarget
 	if err := json.Unmarshal(blob, &keys); err != nil {
-		return nil, fmt.Errorf("parsing target: %w", err)
+		return nil, fmt.Errorf("%w: %w", ErrorCouldNotParseKeys, err)
 	}
 	return &keys, nil
 }
