@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	ErrorMissingNpmjsKeyIdKeyUsage = errors.New("could not find a key with the specified 'keyId' and 'keyUsage'")
+	ErrorMissingNpmjsKeyIDKeyUsage = errors.New("could not find a key with the specified 'keyId' and 'keyUsage'")
 	ErrorCouldNotFindTarget        = errors.New("could not get the target from the tuf root")
 )
 
@@ -79,7 +79,7 @@ func getKeyDataWithNpmjsKeysTarget(keys *npmjsKeysTarget, keyID, keyUsage string
 			return key.PublicKey.RawBytes, nil
 		}
 	}
-	return "", fmt.Errorf("%w: 'keyId': %s, 'keyUsage':%s", ErrorMissingNpmjsKeyIdKeyUsage, keyID, keyUsage)
+	return "", fmt.Errorf("%w: 'keyId': %s, 'keyUsage':%s", ErrorMissingNpmjsKeyIDKeyUsage, keyID, keyUsage)
 }
 
 /*

@@ -115,7 +115,7 @@ func TestGetKeyDataWithNpmjsKeysTarget(t *testing.T) {
 			keyID:           testTargetKeyID,
 			keyUsage:        testTargetKeyUsage,
 			expectedKeyData: "", // should not be returned in this error case
-			expectedErr:     ErrorMissingNpmjsKeyIdKeyUsage,
+			expectedErr:     ErrorMissingNpmjsKeyIDKeyUsage,
 		},
 	}
 	for _, tt := range tests {
