@@ -2,7 +2,7 @@ package gha
 
 import (
 	"fmt"
-	"os"
+	"log"
 	"testing"
 	"time"
 
@@ -10,9 +10,37 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-const testTargetLocalFilePath = "./testdata/registry.npmjs.org_keys.json"
-
 var (
+	testTargetKeysFileContent = `{
+		"keys": [
+			{
+				"keyId": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA",
+				"keyUsage": "npm:signatures",
+				"publicKey": {
+					"rawBytes": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1Olb3zMAFFxXKHiIkQO5cJ3Yhl5i6UPp+IhuteBJbuHcA5UogKo0EWtlWwW6KSaKoTNEYL7JlCQiVnkhBktUgg==",
+					"keyDetails": "PKIX_ECDSA_P256_SHA_256",
+					"validFor": {
+						"start": "1999-01-01T00:00:00.000Z"
+					}
+				}
+			},
+			{
+				"keyId": "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA",
+				"keyUsage": "npm:attestations",
+				"publicKey": {
+					"rawBytes": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE1Olb3zMAFFxXKHiIkQO5cJ3Yhl5i6UPp+IhuteBJbuHcA5UogKo0EWtlWwW6KSaKoTNEYL7JlCQiVnkhBktUgg==",
+					"keyDetails": "PKIX_ECDSA_P256_SHA_256",
+					"validFor": {
+						"start": "2022-12-01T00:00:00.000Z"
+					}
+				}
+			}
+		]
+	}`
+	testTargetPath     = "registry.npmjs.org/keys.json"
+	mockFileContentMap = map[string]string{
+		testTargetPath: testTargetKeysFileContent,
+	}
 	testTargetKeys = npmjsKeysTarget{
 		Keys: []key{
 			{
@@ -39,64 +67,69 @@ var (
 			},
 		},
 	}
-	targetKey          = testTargetKeys.Keys[1]
-	testTargetKeyID    = targetKey.KeyID
-	testTargetKeyUsage = targetKey.KeyUsage
-	testTargetKeyData  = targetKey.PublicKey.RawBytes
+	testTargetKey      = testTargetKeys.Keys[1]
+	testTargetKeyID    = testTargetKey.KeyID
+	testTargetKeyUsage = testTargetKey.KeyUsage
+	testTargetKeyData  = testTargetKey.PublicKey.RawBytes
 )
 
 // mockSigstoreTufClient a mock implementation of sigstoreTufClient.
 type mockSigstoreTufClient struct {
-	localPath string
+	fileContentMap map[string]string
+}
+
+func NewmockSigstoreTufClient() *mockSigstoreTufClient {
+	return &mockSigstoreTufClient{fileContentMap: mockFileContentMap}
 }
 
 // GetTarget mock implementation of GetTarget for the mockSigstoreTufClient.
-func (client mockSigstoreTufClient) GetTarget(targetPath string) ([]byte, error) {
-	content, err := os.ReadFile(targetPath)
-	if err != nil {
-		return nil, fmt.Errorf("reading mock file: %w", err)
+func (c mockSigstoreTufClient) GetTarget(targetPath string) ([]byte, error) {
+	content, exists := c.fileContentMap[targetPath]
+	if !exists {
+		return nil, fmt.Errorf("content not definied in this mock, key: %s", targetPath)
 	}
-	return content, nil
+	return []byte(content), nil
 }
 
 // TestGetNpmjsKeysTarget ensures we can parse the target file.
 func TestGetNpmjsKeysTarget(t *testing.T) {
 	tests := []struct {
 		name         string
-		localPath    string
+		targetPath   string
 		expectedKeys *npmjsKeysTarget
 		expectedErr  error
 	}{
 		{
 			name:         "parsing local registry.npmjs.org_keys.json",
-			localPath:    testTargetLocalFilePath,
+			targetPath:   testTargetPath,
 			expectedKeys: &testTargetKeys,
 		},
 		{
 			name:        "parsing non-existent registry.npmjs.org_keys.json",
-			localPath:   "./testdata/my-fake-path",
+			targetPath:  "my-fake-path.json",
 			expectedErr: ErrorCouldNotFindTarget,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockClient := mockSigstoreTufClient{localPath: tt.localPath}
-			actualKeys, err := getNpmjsKeysTarget(mockClient, tt.localPath)
+			mockClient := NewmockSigstoreTufClient()
+			actualKeys, err := getNpmjsKeysTarget(mockClient, tt.targetPath)
 			if keyDataDiff := cmp.Diff(tt.expectedKeys, actualKeys, cmpopts.EquateComparable()); keyDataDiff != "" {
 				t.Errorf("expected equal values (-want +got):\n%s", keyDataDiff)
 			}
 			if errorDiff := cmp.Diff(tt.expectedErr, err, cmpopts.EquateErrors()); errorDiff != "" {
+				log.Printf("want: %v, got: %v", tt.expectedErr, err)
 				t.Errorf("expected equaivalent errors (-want +got):\n%s", errorDiff)
 			}
 		})
 	}
 }
 
-// TestGetKeyDataWithNpmjsKeysTarget ensure that we find the "npm:attestations" key material, given keyid.
+// TestGetKeyDataWithNpmjsKeysTarget ensure that we find the key material, given keyid and keyusage.
 func TestGetKeyDataWithNpmjsKeysTarget(t *testing.T) {
 	tests := []struct {
 		name            string
-		localPath       string
+		targetPath      string
 		keyID           string
 		keyUsage        string
 		expectedKeyData string
@@ -104,24 +137,24 @@ func TestGetKeyDataWithNpmjsKeysTarget(t *testing.T) {
 	}{
 		{
 			name:            "npmjs' first attestation key",
-			localPath:       testTargetLocalFilePath,
+			targetPath:      testTargetPath,
 			keyID:           testTargetKeyID,
 			keyUsage:        testTargetKeyUsage,
 			expectedKeyData: testTargetKeyData,
 		},
 		{
-			name:            "missing the 'npm:attestations' keyusage",
-			localPath:       "./testdata/wrong_keyusage_registry.npmjs.org_keys.json",
+			name:            "missing another keyUsage",
+			targetPath:      testTargetPath,
 			keyID:           testTargetKeyID,
-			keyUsage:        testTargetKeyUsage,
+			keyUsage:        "npm:somethingelse",
 			expectedKeyData: "", // should not be returned in this error case
 			expectedErr:     ErrorMissingNpmjsKeyIDKeyUsage,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockClient := mockSigstoreTufClient{localPath: tt.localPath}
-			keys, err := getNpmjsKeysTarget(mockClient, tt.localPath)
+			mockClient := NewmockSigstoreTufClient()
+			keys, err := getNpmjsKeysTarget(mockClient, tt.targetPath)
 			if err != nil {
 				t.Fatalf("getNpmjsKeysTarget: %v", err)
 			}
