@@ -37,7 +37,7 @@ var (
 			}
 		]
 	}`
-	testTargetInvalidJsonFileContent = `{
+	testTargetInvalidJSONFileContent = `{
 		blah
 		"keys": [
 			{
@@ -46,10 +46,10 @@ var (
 		]
 	}`
 	testTargetPath            = "my-registry.npmjs.org/keys.json"
-	testTargetInvalidJsonPath = "my-registry.npmjs.org/keys-invalid-json.json"
+	testTargetInvalidJSONPath = "my-registry.npmjs.org/keys-invalid-json.json"
 	mockFileContentMap        = map[string]string{
 		testTargetPath:            testTargetKeysFileContent,
-		testTargetInvalidJsonPath: testTargetInvalidJsonFileContent,
+		testTargetInvalidJSONPath: testTargetInvalidJSONFileContent,
 	}
 	testTargetKeys = npmjsKeysTarget{
 		Keys: []key{
@@ -121,7 +121,7 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 		},
 		{
 			name:        "parsing invalid json",
-			targetPath:  testTargetInvalidJsonPath,
+			targetPath:  testTargetInvalidJSONPath,
 			expectedErr: ErrorCouldNotParseKeys,
 		},
 	}
