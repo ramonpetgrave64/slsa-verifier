@@ -129,7 +129,7 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := NewmockSigstoreTufClient()
 			actualKeys, err := getNpmjsKeysTarget(mockClient, tt.targetPath)
-			if keyDataDiff := cmp.Diff(tt.expectedKeys, actualKeys, cmpopts.EquateComparable()); keyDataDiff != "" {
+			if keyDataDiff := cmp.Diff(tt.expectedKeys, actualKeys); keyDataDiff != "" {
 				t.Errorf("expected equal values (-want +got):\n%s", keyDataDiff)
 			}
 			if errorDiff := cmp.Diff(tt.expectedErr, err, cmpopts.EquateErrors()); errorDiff != "" {
