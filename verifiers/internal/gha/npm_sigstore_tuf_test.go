@@ -88,7 +88,7 @@ type mockSigstoreTufClient struct {
 	fileContentMap map[string]string
 }
 
-// NewMockSigstoreTufClient returns an instance of the mock client, 
+// NewMockSigstoreTufClient returns an instance of the mock client,
 // with fileContentMap as input and outputs of the GetTarget() method
 func NewMockSigstoreTufClient() *mockSigstoreTufClient {
 	return &mockSigstoreTufClient{fileContentMap: mockFileContentMap}
@@ -131,7 +131,7 @@ func TestGetNpmjsKeysTarget(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := NewMockSigstoreTufClient()
 			actualKeys, err := getNpmjsKeysTarget(mockClient, tt.targetPath)
-			if keyDataDiff := cmp.Diff(tt.expectedKeys, actualKeys, .EquateComparable()); keyDataDiff != "" {
+			if keyDataDiff := cmp.Diff(tt.expectedKeys, actualKeys, cmpopts.EquateComparable()); keyDataDiff != "" {
 				t.Errorf("expected equal values (-want +got):\n%s", keyDataDiff)
 			}
 			if errorDiff := cmp.Diff(tt.expectedErr, err, cmpopts.EquateErrors()); errorDiff != "" {
