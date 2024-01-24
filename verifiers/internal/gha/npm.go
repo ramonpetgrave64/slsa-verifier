@@ -15,6 +15,7 @@ import (
 	"github.com/secure-systems-lab/go-securesystemslib/dsse"
 	serrors "github.com/slsa-framework/slsa-verifier/v2/errors"
 	"github.com/slsa-framework/slsa-verifier/v2/options"
+	npmSigstoreTuf "github.com/slsa-framework/slsa-verifier/v2/pkg/npm"
 	"github.com/slsa-framework/slsa-verifier/v2/verifiers/internal/gha/slsaprovenance"
 	"github.com/slsa-framework/slsa-verifier/v2/verifiers/internal/gha/slsaprovenance/common"
 	"github.com/slsa-framework/slsa-verifier/v2/verifiers/utils"
@@ -118,7 +119,7 @@ func getAttestationKey() (string, error) {
 	if value != nil {
 		return value.(string), nil
 	}
-	npmRegistryPublicKey, err := getKeyDataFromSigstoreTuf(npmRegistryPublicKeyID, attestationKeyUsage)
+	npmRegistryPublicKey, err := npmSigstoreTuf.GetKeyDataFromSigstoreTuf(npmRegistryPublicKeyID, npmSigstoreTuf.AttestationKeyUsage)
 	if err != nil {
 		return "", err
 	}

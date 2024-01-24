@@ -1,6 +1,6 @@
 module github.com/slsa-framework/slsa-verifier/v2
 
-go 1.20
+go 1.22
 
 require (
 	github.com/docker/go v1.5.1-1
@@ -19,8 +19,8 @@ require (
 	github.com/google/go-containerregistry v0.17.0
 	github.com/gorilla/mux v1.8.0
 	github.com/sigstore/cosign/v2 v2.2.0
-	github.com/sigstore/sigstore-go v0.0.0-20240108223800-a3df13b8ba29
 	github.com/slsa-framework/slsa-github-generator v1.4.0
+	github.com/slsa-framework/slsa-verifier/v2/pkg/npm v0.0.0-00010101000000-000000000000
 	github.com/spf13/cobra v1.8.0
 	golang.org/x/mod v0.14.0
 	sigs.k8s.io/release-utils v0.7.7
@@ -28,6 +28,9 @@ require (
 
 // use the pending PR #41 branch tuf-client-2
 replace github.com/sigstore/sigstore-go => github.com/sigstore/sigstore-go v0.0.0-20231222133331-d489b534902f
+
+// local dev of separating npm code
+replace github.com/slsa-framework/slsa-verifier/v2/pkg/npm => ./pkg/npm
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -45,6 +48,7 @@ require (
 	github.com/rdimitrov/go-tuf-metadata v0.0.0-20231211110834-6de72dba550c // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
+	github.com/sigstore/sigstore-go v0.0.0-20240108223800-a3df13b8ba29 // indirect
 	github.com/sigstore/timestamp-authority v1.2.1 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/transparency-dev/merkle v0.0.2 // indirect

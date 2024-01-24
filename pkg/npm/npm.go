@@ -1,4 +1,4 @@
-package gha
+package npm
 
 import (
 	"encoding/json"
@@ -10,16 +10,29 @@ import (
 )
 
 const (
-	attestationKeyUsage = "npm:attestations"
-	attestationKeyID    = "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
+	AttestationKeyUsage = "npm:attestations"
 	targetPath          = "registry.npmjs.org/keys.json"
 )
 
 var (
 	ErrorMissingNpmjsKeyIDKeyUsage = errors.New("could not find a key with the specified 'keyId' and 'keyUsage'")
-	ErrorCouldNotFindTarget        = errors.New("could not get the target from the tuf root")
 	ErrorCouldNotParseKeys         = errors.New("could not parse keys file content")
+	ErrorCouldNotFindTarget = errors.New("could not get the target from the tuf root")
 )
+
+type sigstoreTufClient interface {
+	GetTarget(target string) ([]byte, error)
+}
+
+// newSigstoreTufClient Get a Sigstore TUF client, which itself is a wrapper around the official TUF client.
+func newSigstoreTufClient() (*sigstoreTuf.Client, error) {
+	opts := sigstoreTuf.DefaultOptions()
+	client, err := sigstoreTuf.New(opts)
+	if err != nil {
+		return nil, fmt.Errorf("creating SigstoreTuf client: %w", err)
+	}
+	return client, nil
+}
 
 // npmjsKeysTarget describes the structure of the target file.
 type npmjsKeysTarget struct {
@@ -37,20 +50,6 @@ type publicKey struct {
 }
 type validFor struct {
 	Start time.Time `json:"start"`
-}
-
-type sigstoreTufClient interface {
-	GetTarget(target string) ([]byte, error)
-}
-
-// newSigstoreTufClient Get a Sigstore TUF client, which itself is a wrapper around the official TUF client.
-func newSigstoreTufClient() (*sigstoreTuf.Client, error) {
-	opts := sigstoreTuf.DefaultOptions()
-	client, err := sigstoreTuf.New(opts)
-	if err != nil {
-		return nil, fmt.Errorf("creating SigstoreTuf client: %w", err)
-	}
-	return client, nil
 }
 
 /*
@@ -84,7 +83,7 @@ func getKeyDataWithNpmjsKeysTarget(keys *npmjsKeysTarget, keyID, keyUsage string
 }
 
 /*
-getKeyDataFromSigstoreTuf given a keyid and keyusage, retriive the keyfile from sigstore's TUF root,
+GetKeyDataFromSigstoreTuf given a keyid and keyusage, retriive the keyfile from sigstore's TUF root,
 parse the file and return the specific key material.
 See documentation for getNpmjsKeysTarget
 
@@ -93,7 +92,7 @@ example params:
 	keyID: "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
 	keyUsage: "npm:attestations"
 */
-func getKeyDataFromSigstoreTuf(keyID, keyUsage string) (string, error) {
+func GetKeyDataFromSigstoreTuf(keyID, keyUsage string) (string, error) {
 	client, err := newSigstoreTufClient()
 	if err != nil {
 		return "", err
