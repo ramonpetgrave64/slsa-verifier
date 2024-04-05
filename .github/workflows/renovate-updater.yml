@@ -1,0 +1,23 @@
+on:
+  pull_request_target:
+jobs:
+  update-dists:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout PR
+        run: |
+          gh pr checkout ${{ github.event.pull_request.number }}
+      - name: repackage
+        run: |
+          (
+            cd ./actions/installer && \
+            make clean && \
+            make package && \
+            true
+          )
+      - name: commit and push
+        run: |
+          git status
+          git add .
+          git commit -m "update dists"
+          git push
