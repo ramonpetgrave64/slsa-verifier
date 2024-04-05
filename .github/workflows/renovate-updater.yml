@@ -1,17 +1,15 @@
 on:
   pull_request_target:
+
+# example from
+# https://github.com/actions/checkout/blob/cd7d8d697e10461458bc61a30d094dc601a8b017/README.md#push-a-commit-using-the-built-in-token
 jobs:
   update-dists:
     runs-on: ubuntu-latest
     steps:
-      - name: git init
+      - id: checkout-pr
         uses: actions/checkout@v4
-      - name: checkout PR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh pr checkout ${{ github.event.pull_request.number }}
-      - name: repackage
+      - id: repackage
         run: |
           (
             cd ./actions/installer && \
@@ -19,8 +17,7 @@ jobs:
             make package && \
             true
           )
-      # https://github.com/actions/checkout/blob/cd7d8d697e10461458bc61a30d094dc601a8b017/README.md#push-a-commit-using-the-built-in-token
-      - name: commit and push
+      - id: commit-and-push
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
