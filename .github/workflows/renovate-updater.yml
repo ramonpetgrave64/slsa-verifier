@@ -4,6 +4,8 @@ jobs:
   update-dists:
     runs-on: ubuntu-latest
     steps:
+      - name: git init
+        uses: actions/checkout@v4
       - name: checkout PR
         env:
           GH_TOKEN: ${{ github.token }}
