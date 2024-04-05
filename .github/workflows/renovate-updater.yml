@@ -1,3 +1,10 @@
+# Rebuild the /dist folder of our github action.
+# While renovate-bot can bump versions in package.json and package-lock.json,
+# it doesn' have the ability to run our `make package` script.
+# As a pull_request_target event, this workflow is triggered by PRs,
+# but runs withing the context of a repo, and outside of the PR
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+
 on:
   pull_request_target:
 
@@ -27,6 +34,7 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git status
-          git add .
-          git commit -m "update dists"
-          git push
+          git diff --exit-code && \
+            git add . && \
+            git commit -m "update dists" && \
+            git push
