@@ -19,8 +19,11 @@ jobs:
             make package && \
             true
           )
+      # https://github.com/actions/checkout/blob/cd7d8d697e10461458bc61a30d094dc601a8b017/README.md#push-a-commit-using-the-built-in-token
       - name: commit and push
         run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
           git status
           git add .
           git commit -m "update dists"
