@@ -13,7 +13,6 @@
 # TODO: skip if PR wasn't created by renovate-bot
 # TODO: skip if there are no package.json or package-lock.json changes 
 # TODO: conclude the workflow gracefully if there are no changes
-# TODO: use a fine-grained token for pushing
 
 on:
   pull_request_target:
@@ -53,6 +52,14 @@ jobs:
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: ./${{ env.ARTIFACT_NAME }}
+      # expecting this to fail
+      - id: commit-and-push
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git status
+          git add .
+          git commit -m "update dists" && git push || echo "no changes"
 
   commit-and-push:
     needs: [update-dist]
