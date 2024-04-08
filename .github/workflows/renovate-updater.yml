@@ -27,11 +27,17 @@ env:
 # https://github.com/actions/checkout/blob/cd7d8d697e10461458bc61a30d094dc601a8b017/README.md#push-a-commit-using-the-built-in-token
 jobs:
   rebuild:
-    if: github.event.sender.login == 'renovate-bot'
+    # if: github.event.sender.login == 'renovate-bot'
     permissions:
       pull-requests: read
     runs-on: ubuntu-latest
     steps:
+      - id: details
+        run: |
+          echo ${{ github.event.sender.login }}
+          echo ${{ github.event.sender.name }}
+          echo echo ${{ github.event.pull_request.user.login }}
+          echo echo ${{ github.event.pull_request.user.name }}
       - id: git-init
         uses: actions/checkout@v4
         with:
