@@ -1,17 +1,32 @@
 # Rebuild the /dist folder of our github action.
 # While renovate-bot can bump versions in package.json and package-lock.json,
-# it doesn' have the ability to run our `make package` script.
+# it doesn' have the ability to run our `make package` script to rebuild the `dist/` folder
+# that contains the final javasctipt code to be executed. This workflow rebuilds the javascript
+# and adds the changes as a commit to the triggering PR.
 # As a pull_request_target event, this workflow is triggered by PRs,
 # but runs withing the context of a repo, and outside of the PR
 # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+# We use a separate job for executing the PRs untrusted code.
+# We avoid using `git apply` because there may be more vulnerabilities: https://github.blog/2023-02-14-git-security-vulnerabilities-announced-3/
+# maybe use `actions/upload-artifact` for every changed file, if path is preserved.
+
+# TODO: skip if PR wasn't created by renovate-bot
+# TODO: skip if there are no package.json or package-lock.json changes 
+# TODO: conclude the workflow gracefully if there are no changes
 
 on:
   pull_request_target:
 
+env:
+  ARTIFACT_NAME: dist
+  DIST_FOLDER: ./actions/installer/dist
+
 # example from
 # https://github.com/actions/checkout/blob/cd7d8d697e10461458bc61a30d094dc601a8b017/README.md#push-a-commit-using-the-built-in-token
 jobs:
-  update-dists:
+  update-dist:
+    permissions:
+      pull-requests: read
     runs-on: ubuntu-latest
     steps:
       - id: git-init
@@ -21,20 +36,49 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh pr checkout ${{ github.event.pull_request.number }}
-      - id: repackage
+      - id: rebuild
         run: |
           (
-            cd ./actions/installer && \
+            cd ${{ env.DIST_FOLDER }}/../ && \
             make clean && \
             make package && \
             true
           )
-      - id: commit-and-push
+      - id: archive
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git status
-          git diff --exit-code && \
-            git add . && \
-            git commit -m "update dists" && \
-            git push
+          tar -czvf ./${{ env.ARTIFACT_NAME }}.tar ${{ env.DIST_FOLDER }}
+      - id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ./${{ env.ARTIFACT_NAME }}.tar
+
+  commit-and-push:
+    needs: [update-dist]
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+    - id: git-init
+      uses: actions/checkout@v4
+    - id: checkout-pr
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh pr checkout ${{ github.event.pull_request.number }}
+    - id: download
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ env.ARTIFACT_NAME }}
+    - id: extract
+      run: |
+        rm -rf  ${{ env.DIST_FOLDER }}
+        tar xvf ${{ env.ARTIFACT_NAME }}.tar -C ${{ env.DIST_FOLDER }}
+    - id: commit-and-push
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git status
+        git add .
+        git commit -m "update dists" && git push || echo "no changes"
+
