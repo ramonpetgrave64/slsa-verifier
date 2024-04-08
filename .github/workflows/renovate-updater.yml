@@ -10,12 +10,14 @@
 # We avoid using `git apply` because there may be more vulnerabilities: https://github.blog/2023-02-14-git-security-vulnerabilities-announced-3/
 # maybe use `actions/upload-artifact` for every changed file, if path is preserved.
 
-# TODO: skip if PR wasn't created by renovate-bot
-# TODO: skip if there are no package.json or package-lock.json changes 
-# TODO: conclude the workflow gracefully if there are no changes
+# TODO: use fine-grained token scoped to renovate-bot's fork
 
 on:
   pull_request_target:
+    paths:
+      - ./actions/installer/**
+    branches:
+      - main
 
 env:
   ARTIFACT_NAME: dist.tar
@@ -24,18 +26,17 @@ env:
 # example from
 # https://github.com/actions/checkout/blob/cd7d8d697e10461458bc61a30d094dc601a8b017/README.md#push-a-commit-using-the-built-in-token
 jobs:
-  update-dist:
+  rebuild:
+    if: github.event.sender.login == 'renovate-bot'
     permissions:
       pull-requests: read
     runs-on: ubuntu-latest
     steps:
       - id: git-init
         uses: actions/checkout@v4
-      - id: checkout-pr
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh pr checkout ${{ github.event.pull_request.number }}
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
       - id: rebuild
         run: |
           (
@@ -44,25 +45,14 @@ jobs:
             make package && \
             true
           )
-      - id: archive
-        run: |
-          tar -czvf ./${{ env.ARTIFACT_NAME }} ${{ env.DIST_FOLDER }}
       - id: upload
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}
-          path: ./${{ env.ARTIFACT_NAME }}
-      # expecting this to fail
-      - id: commit-and-push
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git status
-          git add .
-          git commit -m "update dists" && git push || echo "no changes"
+          path: ${{ env.DIST_FOLDER }}
 
-  commit-and-push:
-    needs: [update-dist]
+  push:
+    needs: [rebuild]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -74,21 +64,22 @@ jobs:
         GH_TOKEN: ${{ github.token }}
       run: |
         gh pr checkout ${{ github.event.pull_request.number }}
+    - id: prep
+      run:  |
+        rm -rf ${{ env.DIST_FOLDER }}
     - id: download
       uses: actions/download-artifact@v4
       with:
         name: ${{ env.ARTIFACT_NAME }}
-    - id: extract
-      run: |
-        rm -rf  ${{ env.DIST_FOLDER }}
-        mkdir ${{ env.DIST_FOLDER }}
-        tar xvf ${{ env.ARTIFACT_NAME }}
-        rm ${{ env.ARTIFACT_NAME }}
-    - id: commit-and-push
+    - id: push
       run: |
         git config user.name github-actions
         git config user.email github-actions@github.com
         git status
         git add .
-        git commit -m "update dists" && git push || echo "no changes"
-
+        if git commit -m "update ${{ env.DIST_FOLDER }}"
+        then
+          git push
+        else
+          echo "no changes"
+        fi
