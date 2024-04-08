@@ -16,8 +16,6 @@ on:
   pull_request_target:
     paths:
       - ./actions/installer/**
-    branches:
-      - main
 
 env:
   ARTIFACT_NAME: dist.tar
