@@ -14,8 +14,8 @@
 
 on:
   pull_request_target:
-    paths:
-      - ./actions/installer/**
+    # paths:
+    #   - ./actions/installer/**
 
 env:
   ARTIFACT_NAME: dist.tar
