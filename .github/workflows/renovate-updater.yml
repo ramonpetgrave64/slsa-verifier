@@ -18,7 +18,7 @@ on:
     #   - ./actions/installer/**
 
 env:
-  ARTIFACT_NAME: dist.tar
+  ARTIFACT_NAME: dist
   DIST_FOLDER: ./actions/installer/dist
 
 # example from
@@ -75,6 +75,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: ${{ env.ARTIFACT_NAME }}
+        path: ${{ env.DIST_FOLDER }}
     - id: push
       run: |
         git config user.name github-actions
