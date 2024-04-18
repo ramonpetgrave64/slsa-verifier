@@ -84,12 +84,12 @@ runs:
       shell: bash
       env:
         # Builder.
-        BUILDER_REPOSITORY: slsa-framework/slsa-github-generator # The repository to download the pre-built builder binary from.
+        BUILDER_REPOSITORY: ramonpetgrave64/slsa-github-generator # The repository to download the pre-built builder binary from.
         BUILDER_RELEASE_BINARY: "${{ inputs.binary }}" # The name of the pre-built binary in the release assets. This is also used as the final binary name when compiling the builder from source.
         # Verifier
         # NOTE: These VERIFIER_* variables are used in the builder-fetch.sh script for verification of builder
         # release binaries when the compile-builder input is false.
-        VERIFIER_REPOSITORY: slsa-framework/slsa-verifier # The repository to download the pre-built verifier binary from.
+        VERIFIER_REPOSITORY: ramonpetgrave64/slsa-verifier # The repository to download the pre-built verifier binary from.
         VERIFIER_RELEASE_BINARY: slsa-verifier-linux-amd64 # The name of the verifier binary in the release assets.
         VERIFIER_RELEASE_BINARY_SHA256: 54e4f40bf120bce1cef1ff123fef3456e8c526f315c47e22ed6acfe02a06b9a8 # The expected hash of the verifier binary.
         VERIFIER_RELEASE: v2.5.1 # The version of the verifier to download.

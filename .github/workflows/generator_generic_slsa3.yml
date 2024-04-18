@@ -156,7 +156,7 @@ jobs:
       - name: Generate builder
         id: generate-builder
         continue-on-error: true
-        uses: slsa-framework/slsa-github-generator/.github/actions/generate-builder@v2.0.0-rc.0
+        uses: ramonpetgrave64/slsa-github-generator/.github/actions/generate-builder@v2.0.0-rc.0
         with:
           repository: "${{ needs.detect-env.outputs.repository }}"
           ref: "${{ needs.detect-env.outputs.ref }}"
@@ -165,6 +165,7 @@ jobs:
           compile-builder: "${{ inputs.compile-generator }}"
           directory: "${{ env.BUILDER_DIR }}"
           allow-private-repository: ${{ inputs.private-repository }}
+          testing: true
 
       - name: Extract subjects file metadata
         id: metadata
