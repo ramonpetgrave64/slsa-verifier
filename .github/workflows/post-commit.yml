@@ -1,3 +1,6 @@
+# A workflow to run against renovate-bot's PRs,
+# such as `make package` after it updates the package.json and package-lock.json files.
+
 name: Post-Commit
 
 on:
