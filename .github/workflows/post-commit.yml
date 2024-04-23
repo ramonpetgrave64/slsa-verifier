@@ -45,7 +45,7 @@ jobs:
                   git add .
                   git status
                   git diff HEAD > ${{ env.ARTIFACT }}
-                  [ -s ${{ env.ARTIFACT }} ] && RESULT=true || RESULT=false
+                  [ -z "$(cat ${{ env.ARTIFACT }})" ] && RESULT=false || RESULT=true
                   echo "patch_not_empty=$RESULT" >> "$GITHUB_OUTPUT"
             - name: upload
               uses: actions/upload-artifact@v4
