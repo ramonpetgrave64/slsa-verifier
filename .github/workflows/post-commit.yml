@@ -17,7 +17,7 @@ env:
             true
         )
     COMMIT_MESSAGE: "apply post-commit changes"
-    PATCH: changes.patch
+    ARTIFACT: changes.patch
 
 jobs:
     diff:
@@ -41,12 +41,12 @@ jobs:
               run: |
                   git add .
                   git status
-                  git diff HEAD > ${{ env.PATCH }}
+                  git diff HEAD > ${{ env.ARTIFACT }}
             - name: upload-diff
               uses: actions/upload-artifact@v4
               with:
-                  name: ${{ env.PATCH }}
-                  path: ${{ env.PATCH }}
+                  name: ${{ env.ARTIFACT }}
+                  path: ${{ env.ARTIFACT }}
 
     push:
         runs-on: ubuntu-latest
@@ -64,11 +64,11 @@ jobs:
             - name: download-patch
               uses: actions/download-artifact@v4
               with:
-                  name: ${{ env.PATCH }}
-                  path: ../${{ env.PATCH }}
+                  name: ${{ env.ARTIFACT }}
             - id: apply
               run: |
-                  git apply ../${{ env.PATCH }}
+                  git apply ${{ env.ARTIFACT }}
+                  rm ${{ env.ARTIFACT }}
             # example from
             # https://github.com/actions/checkout/blob/cd7d8d697e10461458bc61a30d094dc601a8b017/README.md#push-a-commit-using-the-built-in-token
             - name: push
