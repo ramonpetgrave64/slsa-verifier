@@ -23,6 +23,8 @@ jobs:
     diff:
         permissions:
             pull-requests: read
+        outputs:
+            patch_not_empty: ${{ steps.diff.outputs.patch_not_empty }}
         runs-on: ubuntu-latest
         steps:
             - name: checkout
@@ -38,17 +40,21 @@ jobs:
             - name: run-command
               run: ${{ env.COMMAND }}
             - name: diff
+              id: diff
               run: |
                   git add .
                   git status
                   git diff HEAD > ${{ env.ARTIFACT }}
-            - name: upload-diff
+                  [ -s ${{ env.ARTIFACT }} ] && RESULT=true || RESULT=false
+                  echo "patch_not_empty=$RESULT" >> "$GITHUB_OUTPUT"
+            - name: upload
               uses: actions/upload-artifact@v4
               with:
                   name: ${{ env.ARTIFACT }}
                   path: ${{ env.ARTIFACT }}
 
     push:
+        if: needs.diff.outputs.patch_not_empty
         needs: diff
         runs-on: ubuntu-latest
         permissions:
