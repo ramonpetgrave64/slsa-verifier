@@ -47,6 +47,7 @@ jobs:
                   git diff HEAD > ${{ env.ARTIFACT }}
                   [ -z "$(cat ${{ env.ARTIFACT }})" ] && RESULT=false || RESULT=true
                   echo "patch_not_empty=$RESULT" >> "$GITHUB_OUTPUT"
+                  echo "patch_not_empty=$RESULT"
             - name: upload
               uses: actions/upload-artifact@v4
               with:
