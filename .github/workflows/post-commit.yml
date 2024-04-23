@@ -49,6 +49,7 @@ jobs:
                   path: ${{ env.ARTIFACT }}
 
     push:
+        needs: diff
         runs-on: ubuntu-latest
         permissions:
             pull-requests: read
