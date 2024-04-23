@@ -1,0 +1,136 @@
+# Triggers when a PR is approved from renovate-bot.
+# Runs `make package`, to update the dist/ folder, and uploads the changes as a patch file.
+# The first pull_request_review event is unprivileged, and so after the PR is approved, 
+# the second privileged workflow_run event will trigger, apply the patch and push the chages to the PR.
+
+name: Post-Commit
+
+on:
+    pull_request_review:
+        types: [submitted]
+    workflow_run:
+        workflows: ["Post-Commit"]
+        types:
+            - completed
+
+env:
+    COMMAND: |
+        (
+            cd ./actions/installer/dist/../ && \
+            make clean && \
+            make package && \
+            true
+        )
+    COMMIT_MESSAGE: "apply post-commit changes"
+    PATCH: changes.patch
+    PR_NUMBER: pr_number.txt
+
+jobs:
+    check-pr-status:
+        # Only run on approved PRs that are renovate-bots' deps updates.
+        # Ideally, we would use the renovate-bot's username, but it's not always possible when the renovateer was manually triggered.
+        # i.e.: `${{ github.event.pull_request.user.login }} == 'renovate-bot'`.
+        if: |
+            github.event.review.state == 'APPROVED' &&
+            contains(github.event.pull_request.title, '(deps)') &&
+            true
+        outputs:
+            reviewer_permission: ${{ steps.check-reviewer-permissions.outputs.permission }}
+        permissions:
+          pull-requests: read
+        runs-on: ubuntu-latest
+        steps:
+          - name: check-reviewer-permissions
+            id: check-reviewer-permissions
+            run: |
+                PERMISSION=$(/repos/OWNER/REPO/collaborators/USERNAME/permission | jq -r '.permission')
+                echo "::set-output name=permission::$PERMISSION"
+    
+    is_approved:
+        runs-on: ubuntu-latest
+        needs: check-pr-status
+        if: |
+            needs.check-pr-status.outputs.reviewer_permission == 'write' ||
+            needs.check-pr-status.outputs.reviewer_permission == 'admin' ||
+            false
+        permissions: {}
+        steps:
+            - run: echo "PR is approved by a maintainer."
+
+    diff:
+        if: github.event_name == 'pull_request_review'
+        needs: is_approved
+        permissions:
+            pull-requests: read
+        runs-on: ubuntu-latest
+        steps:
+          - name: checkout
+            uses: actions/checkout@v4
+            with:
+              repository: ${{ github.repository }}
+              ref: ${{ github.event.review.commit_id }}
+              persist-credentials: false
+          - name: run-command
+            run: ${{ env.command }}
+          - name: diff
+            run: |
+              git add .
+              git status
+              git diff HEAD > ${{ env.PATCH }}
+          - name: upload-diff
+            uses: actions/upload-artifact@v4
+            with:
+              name: ${{ env.PATCH }}
+              path: ${{ env.PATCH }}
+          - name: record-pr-number
+            run: echo ${{ github.event.pull_request.number }}> ../$PR_NUMBER
+          - name: upload-pr-number
+            uses: actions/upload-artifact@v4
+            with:
+              name: ${{ env.PR_NUMBER }}
+              path: ../${{ env.PR_NUMBER }}
+
+    push:
+        if: github.event.workflow_run.conclusion == 'success'
+        needs: is_approved
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: read
+            contents: write
+        steps:
+            - id: download-pr-number
+              uses: actions/download-artifact@v4
+              with:
+                name: ${{ env.PR_NUMBER }}
+                path: ../${{ env.PR_NUMBER }}
+            - name: checkout
+              uses: actions/checkout@v4
+            - name: checkout-pr
+              env:
+                GH_TOKEN: ${{ github.token }}
+              run: |
+                  gh pr checkout $(cat ../${{ env.PR_NUMBER }})
+            - name: download-patch
+              uses: actions/download-artifact@v4
+              with:
+                name: ${{ env.PATCH }}
+                path: ../${{ env.PATCH }}
+                run-id: ${{ github.event.workflow_run.id }}
+            - id: apply
+              run: |
+                git apply ../${{ env.PATCH }}
+            # example from
+            # https://github.com/actions/checkout/blob/cd7d8d697e10461458bc61a30d094dc601a8b017/README.md#push-a-commit-using-the-built-in-token
+            - name: push
+              run: |
+                  git config user.name github-actions
+                  git config user.email github-actions@github.com
+                  git add .
+                  git status
+                  if git commit -m "${{ env.COMMIT_MESSAGE }}"
+                  then
+                  git push
+                  else
+                  echo "there is no diff"
+                  fi
+
