@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-
-	sigstoreTuf "github.com/sigstore/sigstore-go/pkg/tuf"
 )
 
 const (
@@ -38,18 +36,10 @@ type validFor struct {
 	Start time.Time `json:"start"`
 }
 
+// sigstoreTufClient is an interface for the Sigstore TUF client.
 type sigstoreTufClient interface {
+	// GetTarget gets the target from the TUF root.
 	GetTarget(target string) ([]byte, error)
-}
-
-// newSigstoreTufClient gets a Sigstore TUF client, which itself is a wrapper around the official TUF client.
-func newSigstoreTufClient() (*sigstoreTuf.Client, error) {
-	opts := sigstoreTuf.DefaultOptions()
-	client, err := sigstoreTuf.New(opts)
-	if err != nil {
-		return nil, fmt.Errorf("creating SigstoreTuf client: %w", err)
-	}
-	return client, nil
 }
 
 // getNpmjsKeysTarget will fetch and parse the keys.json file in Sigstore's root for npmjs
@@ -86,11 +76,7 @@ func getKeyDataWithNpmjsKeysTarget(keys *npmjsKeysTarget, keyID, keyUsage string
 //
 //	keyID: "SHA256:jl3bwswu80PjjokCgh0o2w5c2U4LhQAE57gj9cz1kzA"
 //	keyUsage: "npm:attestations"
-func getKeyDataFromSigstoreTuf(keyID, keyUsage string) (string, error) {
-	client, err := newSigstoreTufClient()
-	if err != nil {
-		return "", err
-	}
+func getKeyDataFromSigstoreTuf(keyID, keyUsage string, client sigstoreTufClient) (string, error) {
 	keys, err := getNpmjsKeysTarget(client, targetPath)
 	if err != nil {
 		return "", err
