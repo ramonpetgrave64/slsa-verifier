@@ -15,6 +15,8 @@ type SLSAVerifier interface {
 	// `BuilderID`.
 	IsAuthoritativeFor(builderIDName string) bool
 
+	// ApplyOptions(options ...VerifierOption) error
+
 	// VerifyArtifact verifies a provenance for a supplied artifact.
 	VerifyArtifact(ctx context.Context,
 		provenance []byte, artifactHash string,
@@ -35,6 +37,8 @@ type SLSAVerifier interface {
 		builderOpts *options.BuilderOpts,
 	) ([]byte, *utils.TrustedBuilderID, error)
 }
+
+type VerifierOption func(p SLSAVerifier) (SLSAVerifier, error)
 
 func RegisterVerifier(name string, verifier SLSAVerifier) {
 	SLSAVerifiers[name] = verifier

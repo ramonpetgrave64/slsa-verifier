@@ -50,6 +50,7 @@ func (b *BundleBytes) UnmarshalJSON(data []byte) error {
 }
 
 type Npm struct {
+	GHAVerifier
 	ctx                   context.Context
 	root                  *TrustedRoot
 	verifiedBuilderID     *utils.TrustedBuilderID
@@ -57,7 +58,6 @@ type Npm struct {
 	verifiedPublishAtt    *SignedAttestation
 	provenanceAttestation *attestation
 	publishAttestation    *attestation
-	verifierOpts          *options.VerifierOpts
 }
 
 func (n *Npm) ProvenanceEnvelope() *dsse.Envelope {
@@ -68,25 +68,7 @@ func (n *Npm) ProvenanceLeafCertificate() *x509.Certificate {
 	return n.verifiedProvenanceAtt.SigningCert
 }
 
-func newDefaultVerifierOpts() (*options.VerifierOpts, error) {
-	sigstoreTUFClient, err := sigstoreTUF.DefaultClient()
-	if err != nil {
-		return nil, err
-	}
-	return &options.VerifierOpts{
-		SigstoreTUFClient: sigstoreTUFClient,
-	}, nil
-}
-
 func NpmNew(ctx context.Context, root *TrustedRoot, attestationBytes []byte) (*Npm, error) {
-	verifierOpts, err := newDefaultVerifierOpts()
-	if err != nil {
-		return nil, err
-	}
-	return NpmNewWithVerifierOpts(ctx, root, attestationBytes, verifierOpts)
-}
-
-func NpmNewWithVerifierOpts(ctx context.Context, root *TrustedRoot, attestationBytes []byte, verifierOpts *options.VerifierOpts) (*Npm, error) {
 	var aSet attestationSet
 	if err := json.Unmarshal(attestationBytes, &aSet); err != nil {
 		return nil, fmt.Errorf("%w: json.Unmarshal: %v", errrorInvalidAttestations, err)
@@ -102,7 +84,6 @@ func NpmNewWithVerifierOpts(ctx context.Context, root *TrustedRoot, attestationB
 
 		provenanceAttestation: prov,
 		publishAttestation:    pub,
-		verifierOpts:          verifierOpts,
 	}, nil
 }
 
@@ -168,7 +149,7 @@ func (n *Npm) verifyPublishAttestationSignature() error {
 
 	// Retrieve the key material.
 	// We found the associated public key in the TUF root, so now we can trust this KeyID.
-	npmRegistryPublicKey, err := getAttestationKey(npmRegistryPublicKeyID, n.verifierOpts.SigstoreTUFClient)
+	npmRegistryPublicKey, err := getAttestationKey(npmRegistryPublicKeyID, n.SigstoreTUFClient)
 	if err != nil {
 		return err
 	}

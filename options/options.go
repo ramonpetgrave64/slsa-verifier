@@ -1,12 +1,5 @@
 package options
 
-import (
-	"log"
-
-	rekorClient "github.com/sigstore/rekor/pkg/generated/client"
-	sigstoreTUF "github.com/sigstore/sigstore-go/pkg/tuf"
-)
-
 // ProvenanceOpts are the options for checking provenance information.
 type ProvenanceOpts struct {
 	// ExpectedBranch is the expected branch (github_ref or github_base_ref) in
@@ -42,16 +35,36 @@ type ProvenanceOpts struct {
 // BuildOpts are the options for checking the builder.
 type BuilderOpts struct {
 	// ExpectedBuilderID is the builderID passed in from the user to be verified
-	ExpectedID   *string
-	VerifierOpts *VerifierOpts
+	ExpectedID *string
 }
 
-// VerifierOpts are the options for the verifier.
-type VerifierOpts struct {
-	// Logger is the logger to use for the verifier.
-	Logger *log.Logger
-	// SigstoreTufClient is the Sigstore TUF client.
-	SigstoreTUFClient *sigstoreTUF.Client
-	// RekorClient is the Rekor client.
-	RekorClient *rekorClient.Rekor
-}
+// // VerifierOpts are the options for the verifier.
+// type VerifierOpts struct {
+// 	// Logger is the logger to use for the verifier.
+// 	Logger *log.Logger
+// 	// SigstoreTufClient is the Sigstore TUF client.
+// 	SigstoreTUFClient *sigstoreTUF.Client
+// 	// RekorClient is the Rekor client.
+// 	RekorClient *rekorClient.Rekor
+// }
+
+// // NewDefaultVerifierOpts returns a new VerifierOpts with default values.
+// func NewDefaultVerifierOpts() *VerifierOpts {
+// 	return &VerifierOpts{
+// 		Logger: log.Default(),
+// 	}
+// }
+
+// // WithLogger sets the logger for the verifier.
+// func (v *VerifierOpts) WithLogger(logger *log.Logger) *VerifierOpts {
+// 	v.Logger = logger
+// 	return v
+// }
+
+// // WithSigstoreTUFClient sets the Sigstore TUF client for the verifier.
+// func (v *VerifierOpts) WithSigstoreTUFClient(sigstoreTUFClient *sigstoreTUF.Client) *VerifierOpts {
+// 	v.SigstoreTUFClient = sigstoreTUFClient
+// 	return v
+// }
+
+// // WithRekorClient sets the Rekor client for the verifier.
