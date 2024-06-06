@@ -36,12 +36,6 @@ type validFor struct {
 	Start time.Time `json:"start"`
 }
 
-// sigstoreTufClient is an interface for the Sigstore TUF client.
-type sigstoreTufClient interface {
-	// GetTarget gets the target from the TUF root.
-	GetTarget(target string) ([]byte, error)
-}
-
 // getNpmjsKeysTarget will fetch and parse the keys.json file in Sigstore's root for npmjs
 // The inner TUF client will verify this "blob" is signed with correct delegate TUF roles
 // https://github.com/sigstore/root-signing/blob/5fd11f7ec0a993b0f20c335b33e53cfffb986b2e/repository/repository/targets/registry.npmjs.org/7a8ec9678ad824cdccaa7a6dc0961caf8f8df61bc7274189122c123446248426.keys.json#L4

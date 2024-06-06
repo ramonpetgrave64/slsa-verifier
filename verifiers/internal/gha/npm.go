@@ -68,22 +68,24 @@ func (n *Npm) ProvenanceLeafCertificate() *x509.Certificate {
 	return n.verifiedProvenanceAtt.SigningCert
 }
 
-func newDefaultVerifierOpts() (*options.VerifierOpts, error) {
-	sigstoreTUFClient, err := sigstoreTUF.DefaultClient()
-	if err != nil {
-		return nil, err
-	}
-	return &options.VerifierOpts{
-		SigstoreTUFClient: sigstoreTUFClient,
-	}, nil
+func NpmNew(ctx context.Context, root *TrustedRoot, attestationBytes []byte) (*Npm, error) {
+	return NpmNewWithVerifierOpts(ctx, root, attestationBytes, nil)
 }
 
-func NpmNew(ctx context.Context, root *TrustedRoot, attestationBytes []byte) (*Npm, error) {
-	verifierOpts, err := newDefaultVerifierOpts()
-	if err != nil {
-		return nil, err
+// ensureCompleteVerifierOpts adds default values to any missing fields in the verifierOpts.
+func ensureCompleteVerifierOpts(verifierOpts *options.VerifierOpts) (*options.VerifierOpts, error) {
+	if verifierOpts == nil {
+		verifierOpts = &options.VerifierOpts{}
 	}
-	return NpmNewWithVerifierOpts(ctx, root, attestationBytes, verifierOpts)
+	if verifierOpts.SigstoreTUFClient == nil {
+		sigstoreTUFClient, err := sigstoreTUF.DefaultClient()
+		if err != nil {
+			return nil, err
+		}
+		verifierOpts.SigstoreTUFClient = sigstoreTUFClient
+	}
+	return verifierOpts, nil
+
 }
 
 func NpmNewWithVerifierOpts(ctx context.Context, root *TrustedRoot, attestationBytes []byte, verifierOpts *options.VerifierOpts) (*Npm, error) {
@@ -93,6 +95,10 @@ func NpmNewWithVerifierOpts(ctx context.Context, root *TrustedRoot, attestationB
 	}
 
 	prov, pub, err := extractAttestations(aSet.Attestations)
+	if err != nil {
+		return nil, err
+	}
+	verifierOpts, err = ensureCompleteVerifierOpts(verifierOpts)
 	if err != nil {
 		return nil, err
 	}

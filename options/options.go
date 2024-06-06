@@ -1,9 +1,6 @@
 package options
 
 import (
-	"log"
-
-	rekorClient "github.com/sigstore/rekor/pkg/generated/client"
 	sigstoreTUF "github.com/sigstore/sigstore-go/pkg/tuf"
 )
 
@@ -42,16 +39,15 @@ type ProvenanceOpts struct {
 // BuildOpts are the options for checking the builder.
 type BuilderOpts struct {
 	// ExpectedBuilderID is the builderID passed in from the user to be verified
-	ExpectedID   *string
+	ExpectedID *string
+	// VerifierOpts are the options for the verifier, including needed clients.
+	// In the future this can be its own standalone argument to the verifier functions
 	VerifierOpts *VerifierOpts
 }
 
 // VerifierOpts are the options for the verifier.
+// In the future, this can include a logger and a rekor client
 type VerifierOpts struct {
-	// Logger is the logger to use for the verifier.
-	Logger *log.Logger
 	// SigstoreTufClient is the Sigstore TUF client.
 	SigstoreTUFClient *sigstoreTUF.Client
-	// RekorClient is the Rekor client.
-	RekorClient *rekorClient.Rekor
 }
