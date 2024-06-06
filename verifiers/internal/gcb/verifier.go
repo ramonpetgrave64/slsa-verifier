@@ -17,20 +17,7 @@ func init() {
 	register.RegisterVerifier(VerifierName, GCBVerifierNew())
 }
 
-// // ApplyOptions applies the VerifierOption to the verifier.
-// func (v *GCBVerifier) ApplyOptions(options ...register.VerifierOption) error {
-// 	for _, o := range options {
-// 		err := o(v)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
-
-type GCBVerifier struct {
-	register.SLSAVerifier
-}
+type GCBVerifier struct{}
 
 func GCBVerifierNew() *GCBVerifier {
 	return &GCBVerifier{}

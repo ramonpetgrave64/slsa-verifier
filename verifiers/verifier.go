@@ -3,9 +3,7 @@ package verifiers
 import (
 	"context"
 	"fmt"
-	"log"
 
-	sigstoreTUF "github.com/sigstore/sigstore-go/pkg/tuf"
 	serrors "github.com/slsa-framework/slsa-verifier/v2/errors"
 	"github.com/slsa-framework/slsa-verifier/v2/options"
 	"github.com/slsa-framework/slsa-verifier/v2/register"
@@ -14,8 +12,10 @@ import (
 	"github.com/slsa-framework/slsa-verifier/v2/verifiers/utils"
 )
 
-func getVerifier(builderOpts *options.BuilderOpts, verifierOpts ...register.VerifierOption) (register.SLSAVerifier, error) {
-	var verifier register.SLSAVerifier = nil
+func getVerifier(builderOpts *options.BuilderOpts) (register.SLSAVerifier, error) {
+	// By default, use the GHA builders
+	verifier := register.SLSAVerifiers[gha.VerifierName]
+
 	// If user provids a builderID, find the right verifier based on its ID.
 	if builderOpts.ExpectedID != nil &&
 		*builderOpts.ExpectedID != "" {
@@ -25,34 +25,11 @@ func getVerifier(builderOpts *options.BuilderOpts, verifierOpts ...register.Veri
 		}
 		for _, v := range register.SLSAVerifiers {
 			if v.IsAuthoritativeFor(name) {
-				verifier = v
-				break
+				return v, nil
 			}
 		}
-		if verifier == nil {
-			// No builder found.
-			return nil, fmt.Errorf("%w: %s", serrors.ErrorVerifierNotSupported, *builderOpts.ExpectedID)
-		}
-	} else {
-		// By default, use the GHA builders
-		verifier = register.SLSAVerifiers[gha.VerifierName]
-	}
-
-	var err error = nil
-	for _, opt := range verifierOpts {
-		verifier, err = opt(verifier)
-		if err != nil {
-			return nil, err
-		}
-	}
-	switch verifier := verifier.(type) {
-	case *gha.GHAVerifier:
-		verifier.Logger = log.Default()
-		sigstoreTUFClient, err := sigstoreTUF.DefaultClient()
-		if err != nil {
-			return nil, err
-		}
-		verifier.SigstoreTUFClient = sigstoreTUFClient
+		// No builder found.
+		return nil, fmt.Errorf("%w: %s", serrors.ErrorVerifierNotSupported, *builderOpts.ExpectedID)
 	}
 
 	return verifier, nil
@@ -88,9 +65,8 @@ func VerifyNpmPackage(ctx context.Context,
 	attestations []byte, tarballHash string,
 	provenanceOpts *options.ProvenanceOpts,
 	builderOpts *options.BuilderOpts,
-	verifierOpts ...register.VerifierOption,
 ) ([]byte, *utils.TrustedBuilderID, error) {
-	verifier, err := getVerifier(builderOpts, verifierOpts...)
+	verifier, err := getVerifier(builderOpts)
 	if err != nil {
 		return nil, nil, err
 	}
