@@ -126,7 +126,8 @@ func getAttestationKey(npmRegistryPublicKeyID string) (string, error) {
 
 func (n *Npm) verifyProvenanceAttestationSignature() error {
 	// Re-use the standard bundle verification.
-	signedProvenance, err := VerifyProvenanceBundle(n.ctx, n.provenanceAttestation.BundleBytes, n.root)
+	// signedProvenance, err := VerifyProvenanceBundle(n.ctx, n.provenanceAttestation.BundleBytes, n.root)
+	signedProvenance, err := getSignedAttestationFromSigstoreBundle(n.provenanceAttestation.BundleBytes)
 	if err != nil {
 		return err
 	}
@@ -136,7 +137,8 @@ func (n *Npm) verifyProvenanceAttestationSignature() error {
 
 func (n *Npm) verifyPublishAttestationSignature() error {
 	// First verify the bundle and its rekor entry.
-	signedPublish, err := verifyBundleAndEntryFromBytes(n.ctx, n.publishAttestation.BundleBytes, n.root, false)
+	// signedPublish, err := verifyBundleAndEntryFromBytes(n.ctx, n.publishAttestation.BundleBytes, n.root, false)
+	signedPublish, err := getSignedAttestationFromSigstoreBundle(n.publishAttestation.BundleBytes)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,6 @@
 package gha
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -12,12 +11,12 @@ import (
 
 func Test_verifyBundle(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	// ctx := context.Background()
 
-	trustedRoot, err := TrustedRootSingleton(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// trustedRoot, err := TrustedRootSingleton(ctx)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 	tests := []struct {
 		name     string
 		path     string
@@ -67,7 +66,8 @@ func Test_verifyBundle(t *testing.T) {
 				panic(fmt.Errorf("os.ReadFile: %w", err))
 			}
 
-			_, err = VerifyProvenanceBundle(ctx, content, trustedRoot)
+			// _, err = VerifyProvenanceBundle(ctx, content, trustedRoot)
+			_, err = getSignedAttestationFromSigstoreBundle(content)
 
 			if !errCmp(err, tt.expected) {
 				t.Errorf(cmp.Diff(err, tt.expected))

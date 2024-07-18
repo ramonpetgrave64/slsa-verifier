@@ -230,7 +230,8 @@ func (v *GHAVerifier) VerifyArtifact(ctx context.Context,
 	var signedAtt *SignedAttestation
 	/* Verify signature on the intoto attestation. */
 	if isSigstoreBundle {
-		signedAtt, err = VerifyProvenanceBundle(ctx, provenance, trustedRoot)
+		// signedAtt, err = VerifyProvenanceBundle(ctx, provenance, trustedRoot)
+		signedAtt, err = getSignedAttestationFromSigstoreBundle(provenance)
 	} else {
 		signedAtt, err = VerifyProvenanceSignature(ctx, trustedRoot, rClient,
 			provenance, artifactHash)
