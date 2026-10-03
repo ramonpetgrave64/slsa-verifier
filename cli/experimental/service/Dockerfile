@@ -9,6 +9,6 @@ RUN go build -o slsa-verifier -trimpath -ldflags "-s -w -extldflags=-static" -mo
 # COPY ./service/service slsa-verifier
 # RUN chmod o+x ./slsa-verifier
 
-FROM gcr.io/distroless/base:nonroot@sha256:97d15218016debb9b6700a8c1c26893d3291a469852ace8d8f7d15b2f156920f
+FROM gcr.io/distroless/base:nonroot@sha256:a0d70d6a97cd697d9362bc2aae4a6560dd65817e365d0043b07325a97975dc91
 COPY --from=base /src/slsa-verifier /
 ENTRYPOINT ["/slsa-verifier"]
